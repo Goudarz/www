@@ -1,0 +1,246 @@
+---
+// src/components/HeroOrb.astro
+// Liquid 3D orb in WebGL2 (raymarched SDF). No dependencies; decorative and hidden from screen readers.
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+---
+
+<div class:list={['orb-wrap pointer-events-none', className]} aria-hidden="true">
+  <!-- Static fallback while WebGL is unavailable or not loaded yet -->
+  <div class="orb-fallback transition-opacity duration-1000 absolute inset-[18%] rounded-full bg-[radial-gradient(circle_at_35%_30%,rgb(255_202_8/.45),rgb(46_58_80/.5)_55%,transparent_70%)] blur-xl"></div>
+  <canvas data-orb class="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-1000"></canvas>
+</div>
+
+<script>
+  const VERT = `#version 300 es
+  in vec2 p;
+  void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
+
+  const FRAG = `#version 300 es
+  precision highp float;
+  uniform vec2 uRes;
+  uniform float uTime;
+  uniform vec2 uMouse;
+  out vec4 outColor;
+
+  mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+
+  float map(vec3 p) {
+    p.xz *= rot(uTime * 0.12 + uMouse.x * 0.9);
+    p.yz *= rot(uMouse.y * 0.7);
+    float t = uTime * 0.55;
+    float d = length(p) - 1.0;
+    d += 0.13 * sin(2.6 * p.x + t) * sin(2.9 * p.y + t * 1.3) * sin(2.4 * p.z + t * 0.7);
+    d += 0.04 * sin(7.0 * p.x - t * 1.7) * sin(6.0 * p.y + t) * sin(8.0 * p.z + t * 0.5);
+    return d * 0.72;
+  }
+
+  vec3 normalAt(vec3 p) {
+    vec2 e = vec2(0.0015, 0.0);
+    return normalize(vec3(
+      map(p + e.xyy) - map(p - e.xyy),
+      map(p + e.yxy) - map(p - e.yxy),
+      map(p + e.yyx) - map(p - e.yyx)));
+  }
+
+  void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
+    vec3 ro = vec3(0.0, 0.0, 4.3);
+    vec3 rd = normalize(vec3(uv, -1.55));
+
+    // Bounding sphere (radius 1.35, with margin over the maximum surface displacement): pixels whose ray
+    // misses it skip the march entirely, and the rest start marching at the sphere instead of at the camera
+    float b = dot(ro, rd);
+    float h = b * b - (dot(ro, ro) - 1.8225);
+    float t = 0.0;
+    bool hit = false;
+    if (h > 0.0) {
+      float sh = sqrt(h);
+      t = max(-b - sh, 0.0);
+      float tExit = -b + sh + 0.1;
+      float d = 1.0;
+      for (int i = 0; i < 64; i++) {
+        d = map(ro + rd * t);
+        if (d < 0.001) { hit = true; break; }
+        t += d;
+        if (t > tExit) break;
+      }
+      // Rays grazing the silhouette can run out of steps just short of the surface; count them as hits
+      // so the edge stays solid instead of showing thin dark seams
+      if (!hit && d < 0.02 && t < tExit) hit = true;
+    }
+
+    // Logo colours: yellow #ffca08 on navy, with white highlights
+    vec3 yellow = vec3(1.0, 0.792, 0.031);
+    vec3 navy = vec3(0.110, 0.165, 0.270);
+    vec3 steel = vec3(0.290, 0.380, 0.560);
+
+    // Soft halo behind the orb
+    float r = length(uv);
+    float halo = exp(-4.0 * max(r - 0.32, 0.0)) * 0.22;
+    vec3 col = mix(steel, yellow, 0.35 + 0.35 * uv.y) * halo;
+    float alpha = halo;
+
+    if (hit) {
+      vec3 p = ro + rd * t;
+      vec3 n = normalAt(p);
+      vec3 l = normalize(vec3(0.6, 0.8, 0.55));
+      float dif = max(dot(n, l), 0.0);
+      float spec = pow(max(dot(reflect(-l, n), -rd), 0.0), 40.0);
+      float fres = pow(1.0 - max(dot(n, -rd), 0.0), 2.4);
+      vec3 base = mix(navy, steel, 0.5 + 0.5 * n.y);
+      // Moving yellow bands, like golden light on navy metal
+      float band = smoothstep(0.55, 1.0, sin(p.y * 5.0 + p.x * 2.0 + uTime * 0.6) * 0.5 + 0.5);
+      col = base * (0.18 + 0.6 * dif) + yellow * (fres * 1.1 + band * 0.35 * dif) + vec3(spec);
+      alpha = 1.0;
+    }
+
+    outColor = vec4(col * alpha, alpha);
+  }`;
+
+  function compile(gl: WebGL2RenderingContext, type: number, src: string) {
+    const s = gl.createShader(type)!;
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+  }
+
+  const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+  async function init(canvas: HTMLCanvasElement) {
+    const gl = canvas.getContext('webgl2', { antialias: false, premultipliedAlpha: true, powerPreference: 'low-power' });
+    if (!gl) return;
+    // Without GPU acceleration WebGL runs on the CPU and would block the main thread every frame;
+    // keep the static CSS fallback in that case
+    // gl.RENDERER is masked ("WebKit WebGL"); the debug extension exposes the real renderer name
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = String(gl.getParameter(debugInfo ? debugInfo.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+    if (/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer)) return;
+
+    const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
+    if (!vs || !fs) return;
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    // Let the driver compile in the background instead of blocking the main thread on the status query
+    const parallel = gl.getExtension('KHR_parallel_shader_compile');
+    if (parallel) {
+      while (!gl.getProgramParameter(prog, parallel.COMPLETION_STATUS_KHR)) await nextFrame();
+    }
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const uRes = gl.getUniformLocation(prog, 'uRes');
+    const uTime = gl.getUniformLocation(prog, 'uTime');
+    const uMouse = gl.getUniformLocation(prog, 'uMouse');
+
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    // The orb is soft and glowing, so a reduced render resolution is invisible but much cheaper,
+    // especially on phones where the GPU is slower and the pixel ratio is high
+    const coarse = matchMedia('(pointer: coarse)').matches || innerWidth < 768;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * (coarse ? 0.6 : 0.85);
+
+    const resize = () => {
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(width * dpr));
+      canvas.height = Math.max(1, Math.round(height * dpr));
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+    };
+    new ResizeObserver(() => {
+      resize();
+      if (!running) draw(performance.now());
+    }).observe(canvas);
+    resize();
+
+    // Follow the pointer with inertia for smooth motion
+    const target = { x: 0, y: 0 };
+    const mouse = { x: 0, y: 0 };
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        target.x = (e.clientX / innerWidth) * 2 - 1;
+        target.y = (e.clientY / innerHeight) * 2 - 1;
+      },
+      { passive: true },
+    );
+
+    let visible = true;
+    let running = false;
+    let raf = 0;
+    const start = performance.now();
+
+    const draw = (now: number) => {
+      mouse.x += (target.x - mouse.x) * 0.05;
+      mouse.y += (target.y - mouse.y) * 0.05;
+      gl.uniform1f(uTime, reduceMotion.matches ? 8 : (now - start) / 1000);
+      gl.uniform2f(uMouse, mouse.x, mouse.y);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+
+    // ~30 fps on phones is smooth enough for a slow ambient animation and halves the GPU and battery cost
+    const frameInterval = coarse ? 1000 / 30 : 0;
+    let lastFrame = 0;
+    const loop = (now: number) => {
+      if (now - lastFrame >= frameInterval - 1) {
+        lastFrame = now;
+        draw(now);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+
+    const update = () => {
+      const shouldRun = visible && !document.hidden && !reduceMotion.matches;
+      if (shouldRun && !running) {
+        running = true;
+        raf = requestAnimationFrame(loop);
+      } else if (!shouldRun && running) {
+        running = false;
+        cancelAnimationFrame(raf);
+      }
+      if (!running) draw(performance.now());
+    };
+
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      update();
+    }).observe(canvas);
+    document.addEventListener('visibilitychange', update);
+    reduceMotion.addEventListener('change', update);
+
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      cancelAnimationFrame(raf);
+      running = false;
+    });
+
+    // First frame in its own task, then fade the canvas in over the static fallback
+    await nextFrame();
+    update();
+    canvas.classList.remove('opacity-0');
+    canvas.parentElement?.querySelector('.orb-fallback')?.classList.add('opacity-0');
+  }
+
+  // On small screens the orb is small, partly off-card and translucent, so the static gradient looks almost
+  // the same; skipping WebGL there saves battery and keeps phones responsive
+  const boot = () => {
+    if (matchMedia('(max-width: 767px)').matches) return;
+    document.querySelectorAll<HTMLCanvasElement>('canvas[data-orb]').forEach((c) => void init(c));
+  };
+  // Boot once the page has loaded and the main thread is idle, so it does not compete with LCP or INP
+  const scheduleBoot = () =>
+    'requestIdleCallback' in window ? requestIdleCallback(boot, { timeout: 3000 }) : setTimeout(boot, 500);
+  if (document.readyState === 'complete') scheduleBoot();
+  else addEventListener('load', scheduleBoot, { once: true });
+</script>

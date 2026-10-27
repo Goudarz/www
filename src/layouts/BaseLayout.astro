@@ -1,0 +1,78 @@
+---
+// src/layouts/BaseLayout.astro
+import { Font } from 'astro:assets';
+import SEO from '../components/SEO.astro';
+import { languages, siteData, type Lang } from '../i18n/ui';
+import { THEME_COLOR } from '../pwa/manifest';
+import '../styles/global.css';
+
+interface Props {
+  lang: Lang;
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const { lang, title, description, noindex } = Astro.props;
+const { dir } = languages[lang];
+const t = siteData[lang];
+---
+
+<!doctype html>
+<html lang={lang} dir={dir}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content={THEME_COLOR} />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Installed app (PWA) appearance; there is deliberately no custom install prompt -->
+    <meta name="application-name" content={t.pwaShortName} />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content={t.pwaShortName} />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+    <!-- Preload only the primary font of the current language -->
+    <Font cssVariable="--font-jakarta" preload={lang === 'en'} />
+    <Font cssVariable="--font-vazir" preload={lang === 'fa' ? [{ subset: 'arabic' }] : false} />
+    <Font cssVariable="--font-vazir-arabic" />
+    <Font cssVariable="--font-jetbrains" />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href={`${languages[lang].path}manifest.webmanifest`} />
+
+    <SEO lang={lang} title={title} description={description} noindex={noindex} />
+
+    <script>
+      // Silent registration: offline support and installability, with no prompts or banners.
+      // Production only; sw.js is generated after the build.
+      if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+        addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
+      }
+    </script>
+  </head>
+  <body class="relative min-h-screen overflow-x-clip bg-ink-950 text-ink-100 antialiased">
+    <a
+      href="#main"
+      class="fixed start-4 top-4 z-50 -translate-y-24 rounded-xl bg-brand-400 px-4 py-3 font-bold text-ink-950 transition-transform focus:translate-y-0"
+    >
+      {t.skipLink}
+    </a>
+
+    <!-- Ambient glow and grid (decorative) -->
+    <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+      <div class="absolute -top-40 start-1/4 h-[28rem] w-[28rem] rounded-full bg-brand-500/10 blur-[120px]"></div>
+      <div class="absolute end-1/4 top-1/2 h-[28rem] w-[28rem] rounded-full bg-accent-500/10 blur-[120px]"></div>
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"></div>
+    </div>
+
+    <div class="relative z-10">
+      <slot />
+    </div>
+  </body>
+</html>

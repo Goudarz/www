@@ -1,0 +1,213 @@
+---
+// src/components/SEO.astro
+import { siteData, languages, profile, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+}
+
+const { lang, noindex = false } = Astro.props;
+const t = siteData[lang];
+const langMeta = languages[lang];
+const title = Astro.props.title ?? t.title;
+const description = Astro.props.description ?? t.description;
+
+const siteUrl = (Astro.site?.toString() ?? profile.siteUrl).replace(/\/$/, '');
+const canonicalURL = new URL(Astro.url.pathname, siteUrl).toString();
+const enUrl = `${siteUrl}${languages.en.path}`;
+const faUrl = `${siteUrl}${languages.fa.path}`;
+const ogImage = `${siteUrl}/og/${lang}.png`;
+const sameAs = profile.socials.map((s) => s.url);
+
+const sourceCode = (item: { title: string; desc: string; link: string; tag: string; language: string }) => ({
+  '@type': 'SoftwareSourceCode',
+  name: item.title,
+  description: item.desc,
+  url: item.link,
+  codeRepository: item.link,
+  programmingLanguage: item.language,
+  keywords: item.tag,
+  author: { '@id': `${siteUrl}/#person` },
+});
+
+// Schema.org graph for Google/Bing and AI crawlers
+const schemaOrg = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'ProfilePage',
+      '@id': `${canonicalURL}#profilepage`,
+      url: canonicalURL,
+      name: title,
+      description,
+      inLanguage: langMeta.locale,
+      isPartOf: { '@id': `${siteUrl}/#website` },
+      mainEntity: { '@id': `${siteUrl}/#person` },
+      primaryImageOfPage: { '@id': `${canonicalURL}#ogimage` },
+      dateModified: new Date().toISOString(),
+    },
+    {
+      '@type': 'ImageObject',
+      '@id': `${canonicalURL}#ogimage`,
+      url: ogImage,
+      width: 1200,
+      height: 630,
+    },
+    {
+      '@type': 'Person',
+      '@id': `${siteUrl}/#person`,
+      name: siteData.en.name,
+      alternateName: [siteData.fa.name],
+      givenName: lang === 'en' ? 'Goudarz' : 'گودرز',
+      familyName: lang === 'en' ? 'Jafari' : 'جعفری',
+      jobTitle: t.role,
+      description: t.heroBio,
+      url: `${siteUrl}/`,
+      email: `mailto:${profile.email}`,
+      telephone: profile.phone,
+      image: `${siteUrl}/logo.png`,
+      sameAs,
+      knowsLanguage: [
+        { '@type': 'Language', name: 'Persian', alternateName: 'fa' },
+        { '@type': 'Language', name: 'English', alternateName: 'en' },
+      ],
+      knowsAbout: [...t.skills, ...t.focus, ...t.mapsTools],
+      workLocation: { '@type': 'Place', name: t.location },
+      worksFor: {
+        '@type': 'Organization',
+        name: siteData.en.experience.company,
+        alternateName: siteData.fa.experience.company,
+        address: { '@type': 'PostalAddress', addressLocality: 'Shiraz', addressCountry: 'IR' },
+      },
+      hasOccupation: {
+        '@type': 'Occupation',
+        name: t.experience.role,
+        description: t.experience.summary,
+        skills: t.experience.groups.flatMap((g) => g.items).join(' '),
+      },
+      memberOf: [
+        { '@id': `${siteUrl}/#nsr` },
+        // Localization roles: one OrganizationRole per free software project
+        ...t.l10n.map((item) => ({
+          '@type': 'OrganizationRole',
+          roleName: item.role,
+          description: item.desc,
+          memberOf: { '@type': 'Organization', name: item.project, ...(item.links[0] && { url: item.links[0].url }) },
+        })),
+      ],
+      hasCredential: {
+        '@type': 'EducationalOccupationalCredential',
+        name: `${t.credentialTitle}, ${t.credentialOrg}`,
+        credentialCategory: 'Professional membership',
+        about: t.credentialField,
+        identifier: profile.credentialId,
+        url: profile.credentialUrl,
+        recognizedBy: { '@id': `${siteUrl}/#nsr` },
+      },
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${siteUrl}/#nsr`,
+      name: t.credentialOrg,
+      alternateName: ['NSR', 'Iran Computer Guild Organization', 'سازمان نظام صنفی رایانه‌ای'],
+      url: 'https://irannsr.org/',
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${siteUrl}/#website`,
+      url: `${siteUrl}/`,
+      name: 'Goudarz Jafari | گودرز جعفری',
+      inLanguage: ['en-US', 'fa-IR'],
+      publisher: { '@id': `${siteUrl}/#person` },
+      image: `${siteUrl}/logo.png`,
+    },
+    {
+      '@type': 'ItemList',
+      '@id': `${canonicalURL}#projects`,
+      name: t.projectsTitle,
+      itemListElement: t.projects.map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: sourceCode(p),
+      })),
+    },
+    {
+      '@type': 'ItemList',
+      '@id': `${canonicalURL}#gists`,
+      name: t.gistsTitle,
+      itemListElement: t.gists.map((g, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: sourceCode(g),
+      })),
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${canonicalURL}#faq`,
+      inLanguage: langMeta.locale,
+      mainEntity: t.faq.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+  ],
+};
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="author" content={t.name} />
+<meta
+  name="robots"
+  content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
+/>
+
+{
+  !noindex && (
+    <>
+      <link rel="canonical" href={canonicalURL} />
+      <link rel="alternate" hreflang="en" href={enUrl} />
+      <link rel="alternate" hreflang="fa" href={faUrl} />
+      <link rel="alternate" hreflang="x-default" href={enUrl} />
+    </>
+  )
+}
+
+<!-- Open Graph / Facebook / Telegram / LinkedIn / WhatsApp -->
+<meta property="og:type" content="profile" />
+<meta property="og:site_name" content="Goudarz Jafari" />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={`${t.name} — ${t.role}`} />
+<meta property="og:locale" content={langMeta.ogLocale} />
+<meta property="og:locale:alternate" content={lang === 'en' ? languages.fa.ogLocale : languages.en.ogLocale} />
+<meta property="profile:first_name" content={lang === 'en' ? 'Goudarz' : 'گودرز'} />
+<meta property="profile:last_name" content={lang === 'en' ? 'Jafari' : 'جعفری'} />
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content={profile.xHandle} />
+<meta name="twitter:creator" content={profile.xHandle} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+<meta name="twitter:image:alt" content={`${t.name} — ${t.role}`} />
+
+<!-- Identity: profile ownership verification (IndieWeb / Mastodon / Google) -->
+{sameAs.map((url) => <link rel="me" href={url} />)}
+
+<!-- Discovery for crawlers and language models -->
+<link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+<link rel="alternate" type="text/markdown" title="LLM-friendly summary" href="/llms.txt" />
+<link rel="author" href="/humans.txt" />
+
+<script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />

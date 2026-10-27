@@ -1,0 +1,519 @@
+---
+// src/components/PortfolioBento.astro
+import { siteData, profile, type Lang } from '../i18n/ui';
+import HeroOrb from './HeroOrb.astro';
+import Terminal from './Terminal.astro';
+import Logo from '../assets/gj-logo.svg';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = siteData[lang];
+const contactSocials = profile.socials.filter((s) => s.label !== 'X');
+// Like the logo: first part of the name white, second part yellow
+const [firstName, ...rest] = t.name.split(' ');
+const lastName = rest.join(' ');
+const contactLabel = t.nav.find((item) => item.href === '#contact')!.label;
+
+// FAQ answers stay plain text (they also feed JSON-LD and llms.txt); on the page the email address,
+// phone number and the GitHub/LinkedIn names become links
+const faqLinks = [
+  { text: profile.email, href: `mailto:${profile.email}` },
+  { text: profile.phoneDisplay[lang], href: `tel:${profile.phone}` },
+  ...profile.socials.filter((s) => s.label === 'GitHub' || s.label === 'LinkedIn').map((s) => ({ text: s.label, href: s.url })),
+];
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const faqLinkPattern = new RegExp(`(${faqLinks.map((l) => escapeRegExp(l.text)).join('|')})`);
+const linkify = (text: string) =>
+  text.split(faqLinkPattern).map((part) => ({ text: part, href: faqLinks.find((l) => l.text === part)?.href }));
+---
+
+<header class="sticky top-0 z-40 border-b border-white/5 bg-ink-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-ink-950/50">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+    <a href={lang === 'en' ? '/' : '/fa/'} class="group flex items-center gap-3 rounded-xl">
+      <Logo class="h-8 w-auto transition-transform duration-300 group-hover:-skew-x-6" aria-hidden="true" />
+      <span>
+        <span class="block font-bold leading-none text-ink-100">{t.name}</span>
+        <span class="text-xs text-ink-400" lang={t.switchLangCode}>{t.alternateName}</span>
+      </span>
+    </a>
+
+    <nav aria-label={t.navLabel} class="flex items-center gap-1 sm:gap-2">
+      <ul class="hidden items-center gap-1 lg:flex">
+        {
+          t.nav.map((item) => (
+            <li>
+              <a href={item.href} class="rounded-lg px-3 py-2 text-sm text-ink-300 transition-colors hover:bg-white/5 hover:text-white">
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <a
+        href={t.switchLangUrl}
+        hreflang={t.switchLangCode}
+        class="flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-4 py-2 text-sm font-medium text-ink-200 transition-colors hover:bg-ink-800"
+      >
+        <span class="h-2 w-2 rounded-full bg-brand-400" aria-hidden="true"></span>
+        <span lang={t.switchLangCode}>{t.switchLangLabel}</span>
+        <span class="sr-only" lang="en"> — {t.switchLangHint}</span>
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" tabindex="-1" class="mx-auto max-w-6xl px-4 py-8 focus:outline-none sm:px-6 sm:py-10">
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
+    <!-- 1. Hero card with the 3D orb -->
+    <section id="about" aria-labelledby="hero-title" class="card flex flex-col justify-between overflow-hidden p-7 sm:p-10 md:col-span-12 md:min-h-[32rem]" data-tilt>
+      <HeroOrb class="absolute -end-20 -top-20 h-72 w-72 opacity-60 sm:h-96 sm:w-96 md:-end-4 md:top-1/2 md:h-[34rem] md:w-[34rem] md:-translate-y-1/2 md:opacity-100 lg:end-4" />
+      <!-- Scrim so text over the orb always keeps enough contrast -->
+      <div class="pointer-events-none absolute inset-0 bg-linear-to-t from-ink-950/80 via-ink-950/40 to-transparent md:bg-linear-to-r md:from-ink-950/70 md:via-transparent rtl:md:bg-linear-to-l" aria-hidden="true"></div>
+      <div class="grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
+
+      <p class="rise relative mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-brand-400/25 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-200 backdrop-blur">
+        <span class="relative flex h-2 w-2" aria-hidden="true">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75 motion-reduce:hidden"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-brand-400"></span>
+        </span>
+        {t.status}
+      </p>
+
+      <div class="relative md:max-w-[58%]">
+        <h1 id="hero-title" class="mb-3 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+          <span class="text-white">{firstName}</span> <span class="text-brand-400">{lastName}</span>
+        </h1>
+        <p class="rise mb-4 text-lg font-semibold text-brand-300 [animation-delay:90ms] sm:text-xl">{t.role}</p>
+        <p class="rise max-w-xl text-base leading-relaxed text-ink-300 [animation-delay:180ms] sm:text-lg">{t.heroBio}</p>
+
+        <div class="rise mt-7 flex flex-wrap gap-3 [animation-delay:270ms]">
+          <a href="#contact" class="btn-primary px-5 py-3">
+            {contactLabel}
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+          <a href="#work" class="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-100 transition-colors hover:bg-white/10">
+            {t.projectsTitle}
+          </a>
+        </div>
+      </div>
+
+      <dl class="rise relative mt-8 flex flex-wrap gap-x-8 gap-y-4 border-t border-white/10 pt-6 [animation-delay:360ms]">
+        {
+          t.stats.map((stat) => (
+            <div class="flex flex-col-reverse">
+              <dt class="mt-0.5 text-xs text-ink-400">{stat.label}</dt>
+              <dd class="text-2xl font-extrabold text-white">{stat.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <!-- 2. Interactive terminal -->
+    <Terminal lang={lang} />
+
+    <!-- 3. Quick facts: structured, easily extractable data for search engines and AI -->
+    <section aria-labelledby="facts-title" class="card reveal p-6 sm:p-8 md:col-span-6" data-tilt>
+      <h2 id="facts-title" class="mb-5 slash text-sm font-semibold uppercase tracking-wider text-ink-300">{t.factsTitle}</h2>
+      <dl class="divide-y divide-white/5 text-sm">
+        {
+          t.facts.map((f) => (
+            <div class="grid grid-cols-[7.5rem_1fr] gap-3 py-2.5">
+              <dt class="text-ink-400">{f.term}</dt>
+              <dd class="text-ink-100">{f.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    <!-- 4. Skills -->
+    <section aria-labelledby="skills-title" class="card reveal p-6 sm:p-8 md:col-span-5" data-tilt>
+      <h2 id="skills-title" class="mb-5 slash text-sm font-semibold uppercase tracking-wider text-ink-300">{t.skillsTitle}</h2>
+      <ul class="flex flex-wrap gap-2.5">
+        {
+          t.skills.map((skill) => (
+            <li class="rounded-xl border border-white/10 bg-ink-950/80 px-4 py-2 text-sm font-medium text-ink-200 transition-[color,border-color,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-400/50 hover:text-brand-200">
+              {skill}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- 5. Free software: the four essential freedoms -->
+    <section id="free-software" aria-labelledby="freedom-title" class="card reveal overflow-hidden p-6 sm:p-8 md:col-span-7" data-tilt>
+      <h2 id="freedom-title" class="slash mb-3 text-sm font-semibold uppercase tracking-wider text-ink-300">{t.freedomTitle}</h2>
+      <p class="mb-6 max-w-prose leading-relaxed text-ink-200">{t.freedomIntro}</p>
+      <ol class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {
+          t.freedoms.map((f) => (
+            <li class="group/free flex gap-4 rounded-2xl border border-white/8 bg-ink-990/40 p-4 transition-colors hover:border-brand-400/40">
+              <span class="-skew-x-12 font-mono text-3xl font-extrabold leading-none text-brand-400 transition-transform duration-300 group-hover/free:skew-x-0" aria-hidden="true">
+                {f.n}
+              </span>
+              <div>
+                <h3 class="font-bold text-white">{f.title}</h3>
+                <p class="mt-1 text-sm leading-relaxed text-ink-300">{f.desc}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <!-- 6. Experience: current position, grouped by area of work -->
+    <section id="experience" aria-labelledby="experience-title" class="card reveal mt-6 p-6 sm:p-8 md:col-span-12" data-tilt>
+      <h2 id="experience-title" class="slash mb-5 text-sm font-semibold uppercase tracking-wider text-ink-300">{t.experienceTitle}</h2>
+      <div class="mb-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h3 class="text-2xl font-bold text-white">
+          {t.experience.role} <span class="text-brand-400">@ {t.experience.company}</span>
+        </h3>
+        <p class="text-sm text-ink-400">{t.experience.location}</p>
+      </div>
+      <p class="mb-8 max-w-3xl leading-relaxed text-ink-200">{t.experience.summary}</p>
+      <div class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2 lg:grid-cols-3">
+        {
+          t.experience.groups.map((group) => (
+            <div>
+              <h4 class="mb-3 text-sm font-semibold text-brand-300">{group.title}</h4>
+              <ul class="space-y-2.5 text-sm leading-relaxed text-ink-300">
+                {group.items.map((item) => (
+                  <li class="relative ps-4 before:absolute before:start-0 before:top-[0.6em] before:h-1.5 before:w-1.5 before:-skew-x-12 before:bg-brand-400/70">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- 7. Projects -->
+    <section id="work" aria-labelledby="work-title" class="mt-6 md:col-span-12">
+      <h2 id="work-title" class="slash reveal mb-5 px-1 text-2xl font-bold text-white sm:text-3xl">{t.projectsTitle}</h2>
+      <ul class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {
+          t.projects.map((project, i) => (
+            <li class="card reveal group flex flex-col p-6" data-tilt>
+              <div class="mb-6 flex items-start justify-between gap-3">
+                <div class="flex flex-wrap gap-2">
+                  <span class="rounded-md border border-accent-400/25 bg-accent-500/10 px-2.5 py-1 font-mono text-xs text-accent-200" dir="auto">
+                    {project.tag}
+                  </span>
+                  {project.status && (
+                    <span class="rounded-md border border-brand-400/30 bg-brand-400/10 px-2.5 py-1 text-xs font-medium text-brand-200">
+                      {project.status}
+                    </span>
+                  )}
+                </div>
+                <span class="pt-1 font-mono text-xs text-ink-400" aria-hidden="true">
+                  0{i + 1}
+                </span>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-brand-200">
+                <a href={project.link} target="_blank" rel="noopener noreferrer" class="stretched-link focus:outline-none">
+                  {project.title}
+                  <span class="sr-only"> {t.newTab}</span>
+                </a>
+              </h3>
+              <p class="text-sm leading-relaxed text-ink-300">{project.desc}</p>
+              <span class="mt-auto flex items-center gap-2 pt-6 text-sm font-medium text-ink-300 transition-colors group-hover:text-brand-300" aria-hidden="true">
+                {project.linkLabel ?? t.projectLinkLabel}
+                <span class="inline-block transition-transform duration-300 group-hover:-translate-y-0.5 rtl:-scale-x-100">↗</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- 8. Localization and open source communities (Mozilla first, as the featured entry) -->
+    <section id="community" aria-labelledby="community-title" class="mt-6 md:col-span-12">
+      <h2 id="community-title" class="slash reveal mb-2 px-1 text-2xl font-bold text-white sm:text-3xl">{t.l10nTitle}</h2>
+      <p class="reveal mb-5 max-w-3xl px-1 text-ink-300">{t.l10nIntro}</p>
+      <ul class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          t.l10n.map((item) => (
+            <li
+              class:list={[
+                'card reveal flex flex-col p-6',
+                item.featured && 'border-brand-400/40! sm:col-span-2 lg:col-span-4 lg:flex-row lg:items-center lg:gap-10',
+                item.wide && 'sm:col-span-2',
+                item.full && 'sm:col-span-2 lg:col-span-4',
+              ]}
+              data-tilt
+            >
+              <div class:list={[item.featured && 'lg:flex-1']}>
+                <h3 class:list={['font-bold text-white', item.featured ? 'text-2xl' : 'text-lg']} lang={/^[A-Za-z]/.test(item.project) ? 'en' : undefined}>
+                  {item.project}
+                </h3>
+                <p class="mt-1 text-sm font-semibold text-brand-300">{item.role}</p>
+                <p class="mt-3 text-sm leading-relaxed text-ink-300">{item.desc}</p>
+                {item.stats && (
+                  <dl class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {item.stats.map((stat) => (
+                      <div class="flex flex-col-reverse">
+                        <dt class="mt-0.5 text-xs text-ink-400">{stat.label}</dt>
+                        <dd class="text-xl font-extrabold tabular-nums text-white">{stat.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {item.note && <p class="mt-4 text-xs text-ink-400">{item.note}</p>}
+                {item.tags && (
+                  <ul class="mt-5 flex flex-wrap gap-2" lang="en">
+                    {item.tags.map((tag) => (
+                      <li class="rounded-lg border border-white/10 bg-ink-990/50 px-2.5 py-1 font-mono text-xs text-ink-200" dir="ltr">{tag}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {item.links.length > 0 && (
+                <ul class:list={['mt-auto flex flex-col gap-1.5 pt-5', item.featured && 'lg:mt-0 lg:pt-0']}>
+                  {item.links.map((link) => (
+                    <li>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 text-sm font-medium text-ink-200 hover:text-brand-300"
+                      >
+                        {link.label}
+                        <span class="inline-block rtl:-scale-x-100" aria-hidden="true">↗</span>
+                        <span class="sr-only"> {t.newTab}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- 9. Gists and snippets -->
+    <section id="snippets" aria-labelledby="snippets-title" class="mt-6 md:col-span-12">
+      <h2 id="snippets-title" class="slash reveal mb-2 px-1 text-2xl font-bold text-white sm:text-3xl">{t.gistsTitle}</h2>
+      <p class="reveal mb-5 px-1 text-ink-300">{t.gistsIntro}</p>
+      <ul class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {
+          t.gists.map((gist) => (
+            <li class="card reveal group flex flex-col p-6" data-tilt>
+              <span class="mb-4 w-fit rounded-md border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-xs text-ink-300" dir="auto">
+                {gist.tag}
+              </span>
+              <h3 class="mb-2 text-lg font-bold text-white transition-colors group-hover:text-brand-200">
+                <a href={gist.link} target="_blank" rel="noopener noreferrer" class="stretched-link focus:outline-none">
+                  {gist.title}
+                  <span class="sr-only"> {t.newTab}</span>
+                </a>
+              </h3>
+              <p class="text-sm leading-relaxed text-ink-300">{gist.desc}</p>
+              <code
+                dir="ltr"
+                class="mt-5 block overflow-x-auto whitespace-nowrap rounded-lg border border-white/5 bg-ink-990/70 px-3 py-2 text-start font-mono text-xs text-brand-200"
+              >
+                {gist.snippet}
+              </code>
+              <span class="mt-auto flex items-center gap-2 pt-5 text-sm font-medium text-ink-300 transition-colors group-hover:text-brand-300" aria-hidden="true">
+                {t.gistLinkLabel}
+                <span class="inline-block transition-transform duration-300 group-hover:-translate-y-0.5 rtl:-scale-x-100">↗</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- 10. Open map data -->
+    <section id="maps" aria-labelledby="maps-title" class="card reveal mt-6 p-6 sm:p-8 md:col-span-7" data-tilt>
+      <h2 id="maps-title" class="slash mb-3 text-sm font-semibold uppercase tracking-wider text-ink-300">{t.mapsTitle}</h2>
+      <p class="mb-6 max-w-prose leading-relaxed text-ink-200">{t.mapsText}</p>
+      <ul class="flex flex-wrap gap-2" dir="ltr">
+        {
+          t.mapsTools.map((tool) => (
+            <li class="rounded-lg border border-white/10 bg-ink-990/50 px-3 py-1.5 font-mono text-xs text-ink-200">{tool}</li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <!-- 11. Professional credential (NSR) -->
+    <section aria-labelledby="credential-title" class="card reveal group mt-6 flex flex-col p-6 sm:p-8 md:col-span-5" data-tilt>
+      <p class="slash mb-3 text-sm font-semibold uppercase tracking-wider text-ink-300">{t.credentialTitle}</p>
+      <h2 id="credential-title" class="mb-4 text-xl font-bold leading-snug text-white">{t.credentialOrg}</h2>
+      <ul class="space-y-1.5 text-sm text-ink-300">
+        <li>{t.credentialField}</li>
+        <li>{t.credentialIssuer}</li>
+        <li class="text-ink-200 tabular-nums">{t.credentialMember}</li>
+      </ul>
+      <a
+        href={profile.credentialUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="mt-auto inline-flex w-fit items-center gap-2 pt-6 text-sm font-semibold text-brand-300 hover:text-brand-200"
+      >
+        {t.credentialVerify}
+        <span class="inline-block rtl:-scale-x-100" aria-hidden="true">↗</span>
+        <span class="sr-only"> {t.newTab}</span>
+      </a>
+    </section>
+
+    <!-- 12. FAQ: direct answers to questions people ask search engines and AI assistants -->
+    <section aria-labelledby="faq-title" class="card reveal mt-6 p-6 sm:p-8 md:col-span-12">
+      <h2 id="faq-title" class="slash mb-4 text-xl font-bold text-white sm:text-2xl">{t.faqTitle}</h2>
+      <div class="divide-y divide-white/5">
+        {
+          t.faq.map((item) => (
+            <details class="group/faq py-1" name="faq">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg py-3 font-semibold text-ink-100 marker:hidden hover:text-brand-200 [&::-webkit-details-marker]:hidden">
+                <h3 class="text-base">{item.q}</h3>
+                <span class="text-xl text-brand-300 transition-transform duration-300 group-open/faq:rotate-45" aria-hidden="true">+</span>
+              </summary>
+              <p class="pb-4 pe-8 leading-relaxed text-ink-300">
+                {linkify(item.a).map((part) =>
+                  part.href ? (
+                    <a
+                      href={part.href}
+                      {...(part.href.startsWith('http') && { target: '_blank', rel: 'noopener noreferrer' })}
+                      {...(!part.href.startsWith('http') && { dir: 'ltr' })}
+                      class="font-medium text-brand-300 underline decoration-brand-300/40 underline-offset-4 hover:text-brand-200 hover:decoration-brand-200"
+                    >
+                      {part.text}
+                      {part.href.startsWith('http') && <span class="sr-only"> {t.newTab}</span>}
+                    </a>
+                  ) : (
+                    part.text
+                  ),
+                )}
+              </p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- 13. Contact -->
+    <section
+      id="contact"
+      aria-labelledby="contact-title"
+      class="card reveal mt-6 flex flex-col items-start justify-between gap-6 overflow-hidden bg-linear-to-r from-brand-950/60 via-ink-900/70 to-ink-990/60 p-8 sm:p-10 md:col-span-12 md:flex-row md:items-center"
+    >
+      <div>
+        <h2 id="contact-title" class="mb-2 text-2xl font-bold text-white sm:text-3xl">{t.contactTitle}</h2>
+        <p class="text-sm text-ink-300 sm:text-base">{t.contactSub}</p>
+        <ul class="mt-3 space-y-1.5 font-mono text-sm">
+          <li>
+            <a href={`mailto:${profile.email}`} class="text-brand-200 underline decoration-brand-300/30 underline-offset-4 hover:text-brand-100 hover:decoration-brand-200" dir="ltr">{profile.email}</a>
+          </li>
+          <li>
+            <a href={`tel:${profile.phone}`} class="text-brand-200 underline decoration-brand-300/30 underline-offset-4 hover:text-brand-100 hover:decoration-brand-200" dir="ltr">{profile.phoneDisplay[lang]}</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <a
+          href={`mailto:${profile.email}`}
+          class="btn-primary px-6 py-3"
+        >
+          {t.emailBtn}
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </a>
+        <!-- Swaps to a "Copied" state for a few seconds; the status region below announces it to screen readers -->
+        <button
+          type="button"
+          data-copy={profile.email}
+          class="group/copy inline-flex items-center gap-2 rounded-xl border border-white/10 bg-ink-900 px-4 py-3 text-sm text-ink-200 transition-[color,background-color,border-color] duration-300 hover:bg-ink-800 data-copied:border-brand-400 data-copied:bg-brand-400 data-copied:text-ink-950"
+        >
+          <!-- Both states sit in the same grid cell and only toggle visibility, so the button keeps its size -->
+          <span class="grid place-items-center *:[grid-area:1/1]" aria-hidden="true">
+            <span class="group-data-copied/copy:invisible">⧉</span>
+            <svg class="invisible h-4 w-4 group-data-copied/copy:visible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+          </span>
+          <span class="grid justify-items-center *:[grid-area:1/1]">
+            <span class="group-data-copied/copy:invisible">{t.copyEmail}</span>
+            <span class="invisible group-data-copied/copy:visible">{t.copiedBtn}</span>
+          </span>
+        </button>
+        {
+          contactSocials.map((s) => (
+            <a
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer me"
+              class="rounded-xl border border-white/10 bg-ink-900 px-4 py-3 font-mono text-sm text-ink-200 transition-colors hover:bg-ink-800"
+            >
+              {s.label}
+              <span class="sr-only"> {t.newTab}</span>
+            </a>
+          ))
+        }
+        <p role="status" class="sr-only" data-copy-status data-message={t.copied}></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="mx-auto max-w-6xl border-t border-white/5 px-4 py-8 text-center text-xs text-ink-400 sm:flex sm:items-center sm:justify-between sm:px-6">
+  <p>© {new Date().getFullYear()} {t.name} (<span lang={t.switchLangCode}>{t.alternateName}</span>)</p>
+  <p class="mt-2 font-mono sm:mt-0">{t.footerBuilt}</p>
+</footer>
+
+<script>
+  // Card spotlight and 3D tilt; only for fine pointers and when reduced motion is off
+  const fine = matchMedia('(hover: hover) and (pointer: fine)');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+
+  document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {
+    let frame = 0;
+    card.addEventListener('pointermove', (e) => {
+      if (!fine.matches) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+        card.style.setProperty('--mx', `${x * 100}%`);
+        card.style.setProperty('--my', `${y * 100}%`);
+        if (!reduce.matches) {
+          card.style.setProperty('--rx', `${(0.5 - y) * 4}deg`);
+          card.style.setProperty('--ry', `${(x - 0.5) * 5}deg`);
+        }
+      });
+    });
+    card.addEventListener('pointerleave', () => {
+      cancelAnimationFrame(frame);
+      card.style.setProperty('--rx', '0deg');
+      card.style.setProperty('--ry', '0deg');
+    });
+  });
+
+  // Copy email and announce the result to screen readers
+  const status = document.querySelector<HTMLElement>('[data-copy-status]');
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
+    let timer = 0;
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.copy!);
+        if (status) {
+          status.textContent = '';
+          requestAnimationFrame(() => (status.textContent = status.dataset.message ?? ''));
+        }
+        btn.dataset.copied = '';
+        clearTimeout(timer);
+        timer = window.setTimeout(() => delete btn.dataset.copied, 2500);
+      } catch {
+        location.href = `mailto:${btn.dataset.copy}`;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,24 @@
+---
+// src/pages/404.astro
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroOrb from '../components/HeroOrb.astro';
+import { siteData } from '../i18n/ui';
+
+const en = siteData.en;
+const fa = siteData.fa;
+---
+
+<BaseLayout lang="en" title={`404 — ${en.notFoundTitle} | ${en.name}`} description={en.notFoundText} noindex>
+  <main id="main" tabindex="-1" class="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 text-center focus:outline-none">
+    <div class="relative mb-6 h-56 w-56">
+      <HeroOrb class="absolute inset-0" />
+      <p class="absolute inset-0 flex items-center justify-center font-mono text-5xl font-extrabold text-white mix-blend-overlay" aria-hidden="true">404</p>
+    </div>
+    <h1 class="mb-3 text-3xl font-extrabold sm:text-4xl">{en.notFoundTitle}</h1>
+    <p class="mb-8 text-ink-300">{en.notFoundText}</p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <a href="/" class="rounded-xl bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 hover:bg-brand-300">{en.notFoundBack}</a>
+      <a href="/fa/" hreflang="fa" lang="fa" dir="rtl" class="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10">{fa.notFoundBack}</a>
+    </div>
+  </main>
+</BaseLayout>

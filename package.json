@@ -1,5 +1,5 @@
 {
-  "name": "goudarz-portfolio",
+  "name": "Goudarz Jafari Portfolio",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -9,9 +9,17 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "check": "astro check",
+    "assets": "node scripts/generate-assets.mjs",
+    "astro": "astro",
+    "screenshots": "node scripts/capture-screenshots.mjs"
   },
   "dependencies": {
-    "astro": "^7.4.2"
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.4.2",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
   }
 }

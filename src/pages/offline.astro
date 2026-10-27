@@ -1,0 +1,35 @@
+---
+// src/pages/offline.astro
+// Served by the service worker when a page is requested offline and is not cached.
+// It is shown at the URL the visitor asked for, so an empty href retries that URL without any JS.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Logo from '../assets/gj-logo.svg';
+import { siteData } from '../i18n/ui';
+
+const en = siteData.en;
+const fa = siteData.fa;
+---
+
+<BaseLayout lang="en" title={`${en.offlineTitle} | ${en.name}`} description={en.offlineText} noindex>
+  <main id="main" tabindex="-1" class="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-10 px-6 py-16 text-center focus:outline-none">
+    <Logo class="h-16 w-auto" aria-hidden="true" />
+
+    <section aria-labelledby="offline-en">
+      <h1 id="offline-en" class="mb-3 text-3xl font-extrabold">{en.offlineTitle}</h1>
+      <p class="text-ink-300">{en.offlineText}</p>
+    </section>
+
+    <section aria-labelledby="offline-fa" lang="fa" dir="rtl">
+      <h2 id="offline-fa" class="mb-3 text-2xl font-extrabold">{fa.offlineTitle}</h2>
+      <p class="text-ink-300">{fa.offlineText}</p>
+    </section>
+
+    <div class="flex flex-wrap justify-center gap-3">
+      <a href="" class="rounded-xl bg-brand-400 px-5 py-3 text-sm font-bold text-ink-950 hover:bg-brand-300">
+        {en.offlineRetry} · <span lang="fa">{fa.offlineRetry}</span>
+      </a>
+      <a href="/" class="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10">{en.notFoundBack}</a>
+      <a href="/fa/" hreflang="fa" lang="fa" dir="rtl" class="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10">{fa.notFoundBack}</a>
+    </div>
+  </main>
+</BaseLayout>

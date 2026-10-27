@@ -1,0 +1,292 @@
+---
+// src/components/Terminal.astro
+// Interactive terminal: the initial JSON is plain HTML (works without JS and for SEO); the command prompt is progressive enhancement.
+import { siteData, profile, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = siteData[lang];
+
+const profileJson = JSON.stringify(
+  {
+    id: 'goudarz-jafari',
+    name: siteData.en.name,
+    native: siteData.fa.name,
+    focus: siteData.en.focus,
+    remote: true,
+    coffee: 'Double Espresso',
+  },
+  null,
+  2,
+);
+
+type Output = string | { text: string; href: string; dir?: 'ltr' };
+
+// GNU-style help: a usage header, then commands and descriptions in two aligned columns.
+// Rows are rendered as a grid (not padded text) so Persian descriptions keep their own direction and font.
+const help = {
+  head: ['goudarz-sh 1.0 — goudarzjafari.com', '', 'Usage: <command>', '', 'Commands:'].join('\n'),
+  rows: t.terminalCommands,
+  hint: t.terminalHelpHint,
+};
+
+// Command output, passed through a data attribute so the client script can read it
+const commands: Record<string, Output[]> = {
+  whoami: [`${t.name} — ${t.role}`, t.location],
+  experience: [
+    `${t.experience.role} @ ${t.experience.company} — ${t.experience.location}`,
+    t.experience.summary,
+  ],
+  ls: ['profile.json'],
+  skills: [t.skills.join(' · ')],
+  projects: t.projects.map((p) => ({ text: `▸ ${p.title} [${p.tag}]`, href: p.link })),
+  l10n: t.l10n.map((item) => (item.links[0] ? { text: `▸ ${item.project} — ${item.role}`, href: item.links[0].url } : `▸ ${item.project} — ${item.role}`)),
+  gists: t.gists.map((g) => ({ text: `▸ ${g.title} [${g.tag}]`, href: g.link })),
+  freedom: t.freedoms.map((f) => `${f.n}. ${f.title} — ${f.desc}`),
+  contact: [
+    { text: profile.email, href: `mailto:${profile.email}`, dir: 'ltr' },
+    { text: profile.phoneDisplay[lang], href: `tel:${profile.phone}`, dir: 'ltr' },
+  ],
+  social: profile.socials.map((s) => ({ text: `${s.label}: ${s.url}`, href: s.url })),
+};
+const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'contact'];
+---
+
+<section
+  dir="ltr"
+  aria-labelledby="terminal-heading"
+  class="card reveal flex flex-col bg-ink-990/80 p-5 sm:p-6 font-mono text-xs sm:text-sm shadow-2xl shadow-black/40 md:col-span-6"
+  data-tilt
+  data-terminal={JSON.stringify({ commands, help, profileJson, unknown: t.terminalUnknown })}
+>
+  <h2 id="terminal-heading" class="sr-only" lang={lang}>{t.terminalHeading}</h2>
+
+  <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
+    <div class="flex items-center gap-2" aria-hidden="true">
+      <span class="h-3 w-3 rounded-full bg-[#ff5f57]"></span>
+      <span class="h-3 w-3 rounded-full bg-[#febc2e]"></span>
+      <span class="h-3 w-3 rounded-full bg-[#28c840]"></span>
+    </div>
+    <span class="text-xs text-ink-400">{t.terminalTitle}</span>
+  </div>
+
+  <div class="flex-1 space-y-2 text-left">
+    <p class="text-brand-300"><span class="text-ink-400" aria-hidden="true">$ </span>{t.terminalCmd}</p>
+    <pre
+      tabindex="0"
+      aria-label="profile.json"
+      class="overflow-x-auto rounded-lg pb-3 text-xs leading-relaxed text-ink-300"><code>{profileJson}</code></pre>
+
+    <ol data-terminal-log role="log" aria-live="polite" lang={lang} class="max-h-64 space-y-1 overflow-y-auto pe-3 [scrollbar-gutter:stable] empty:hidden"></ol>
+  </div>
+
+  <form data-terminal-form class="mt-4 border-t border-white/10 pt-3" autocomplete="off">
+    <label for="terminal-input" class="sr-only" lang={lang}>{t.terminalInputLabel}</label>
+    <!-- The script flips this row to RTL while Persian is typed, so the prompt moves with the text -->
+    <div class="flex items-center gap-2" data-terminal-row>
+      <span class="text-brand-300" aria-hidden="true">❯</span>
+      <div class="relative min-w-0 flex-1">
+        <!-- dir="auto" lays Persian input out right-to-left; the native caret is hidden in favour of the block cursor below -->
+        <input
+          id="terminal-input"
+          name="cmd"
+          type="text"
+          dir="auto"
+          spellcheck="false"
+          autocapitalize="off"
+          enterkeyhint="send"
+          class="w-full bg-transparent text-ink-100 caret-transparent focus:outline-none [&:dir(rtl)]:font-sans"
+        />
+        <!-- Block cursor, moved by the script to the visual end of the typed text (left of the text for RTL) -->
+        <span
+          data-terminal-caret
+          class="caret pointer-events-none absolute left-0 top-1/2 h-4 w-2 -translate-y-1/2 bg-brand-300/80"
+          aria-hidden="true"
+        ></span>
+      </div>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-1.5">
+      <span class="sr-only" lang={lang}>{t.terminalHint}</span>
+      {
+        suggestions.map((cmd) => (
+          <button
+            type="button"
+            data-cmd={cmd}
+            class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-ink-300 transition-colors hover:border-brand-400/50 hover:text-brand-200"
+          >
+            {cmd}
+          </button>
+        ))
+      }
+    </div>
+  </form>
+</section>
+
+<script>
+  type Output = string | { text: string; href: string; dir?: 'ltr' };
+
+  // First strong character decides the direction, matching dir="auto"
+  const RTL = /^[^A-Za-zÀ-ɏ]*[֐-ࣿיִ-﷿ﹰ-﻿]/;
+
+  document.querySelectorAll<HTMLElement>('[data-terminal]').forEach((root) => {
+    const { commands, help, profileJson, unknown } = JSON.parse(root.dataset.terminal!) as {
+      commands: Record<string, Output[]>;
+      help: { head: string; rows: { cmd: string; desc: string }[]; hint: string };
+      profileJson: string;
+      unknown: string;
+    };
+    const form = root.querySelector<HTMLFormElement>('[data-terminal-form]')!;
+    const input = form.querySelector<HTMLInputElement>('input')!;
+    const log = root.querySelector<HTMLOListElement>('[data-terminal-log]')!;
+    const caret = root.querySelector<HTMLElement>('[data-terminal-caret]')!;
+    const row = root.querySelector<HTMLElement>('[data-terminal-row]')!;
+    const measure = document.createElement('canvas').getContext('2d')!;
+    const history: string[] = [];
+    let cursor = 0;
+
+    // Keep one consistent block cursor: idle after the prompt, and at the end of the text while typing.
+    // If the user moves the caret inside the text, fall back to the native caret so editing stays precise.
+    const syncCaret = () => {
+      const rtl = RTL.test(input.value);
+      // ❯ is a Bidi_Mirrored character: in an RTL row the browser already draws it as ❮,
+      // so only the direction changes here (swapping the glyph as well would flip it back)
+      row.dir = rtl ? 'rtl' : 'ltr';
+      const focused = document.activeElement === input;
+      const atEnd = input.selectionStart === input.value.length && input.selectionEnd === input.value.length;
+      const showBlock = focused ? atEnd : input.value === '';
+
+      caret.hidden = !showBlock;
+      input.classList.toggle('caret-transparent', showBlock || !focused);
+      input.classList.toggle('caret-brand-400', !showBlock && focused);
+      if (!showBlock) return;
+
+      const style = getComputedStyle(input);
+      measure.font = style.font;
+      const width = input.clientWidth;
+      const caretWidth = caret.offsetWidth;
+      const textWidth = Math.min(measure.measureText(input.value).width, width - caretWidth);
+      const x = rtl ? width - textWidth - caretWidth : textWidth;
+      caret.style.left = `${Math.max(0, x)}px`;
+
+      // Restart the blink so the cursor stays solid while typing
+      caret.classList.remove('caret');
+      void caret.offsetWidth;
+      caret.classList.add('caret');
+    };
+    ['input', 'focus', 'blur', 'click', 'keyup', 'select'].forEach((type) => input.addEventListener(type, syncCaret));
+    document.addEventListener('selectionchange', () => document.activeElement === input && syncCaret());
+    new ResizeObserver(syncCaret).observe(input);
+
+    const persianPage = log.lang === 'fa';
+    const PERSIAN = /[؀-ۿ]/;
+
+    const line = (output: Output, cls: string, preformatted = false) => {
+      const li = document.createElement('li');
+      // Lines that resolve to RTL use the proportional Persian font; monospace spaces look broken in Persian
+      li.className = `${cls} [&:dir(rtl)]:font-sans`;
+      let text = typeof output === 'string' ? output : output.text;
+      // On the Persian page any line containing Persian is RTL, even when it starts with a Latin name
+      // (e.g. "▸ Mozilla — <Persian role>"); elsewhere each line resolves its own direction
+      // List items (▸) are always RTL on the Persian page so a list never mixes alignments
+      // Email addresses and phone numbers are always LTR
+      if (typeof output !== 'string' && output.dir === 'ltr') preformatted = true;
+      const rtl =
+        !preformatted &&
+        (persianPage ? PERSIAN.test(text) || text.startsWith('▸ ') : RTL.test(text.replace(/^▸ /, '')));
+      li.dir = preformatted ? 'ltr' : rtl ? 'rtl' : 'auto';
+      // ▸ is not Bidi_Mirrored, so point it the other way by hand in RTL lines
+      if (rtl) text = text.replace(/^▸ /, '◂ ');
+      if (typeof output === 'string') {
+        li.textContent = text;
+      } else {
+        const a = document.createElement('a');
+        a.href = output.href;
+        a.textContent = text;
+        a.className = 'underline decoration-white/20 underline-offset-4 hover:text-brand-200 hover:decoration-brand-300';
+        if (output.href.startsWith('http')) {
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        }
+        li.append(a);
+      }
+      log.append(li);
+    };
+
+    const run = (raw: string) => {
+      const cmd = raw.trim().replace(/\s+/g, ' ').toLowerCase();
+      if (!cmd) return;
+      history.push(cmd);
+      cursor = history.length;
+      if (cmd === 'clear') {
+        log.replaceChildren();
+        return;
+      }
+      line(`$ ${cmd}`, 'text-brand-300', true);
+      if (cmd === 'help') {
+        line(help.head, 'whitespace-pre text-ink-300 leading-relaxed', true);
+        help.rows.forEach(({ cmd: name, desc }) => {
+          const li = document.createElement('li');
+          li.dir = 'ltr';
+          li.className = 'grid grid-cols-[18ch_1fr] gap-x-2 ps-[2ch] text-ink-300';
+          const command = document.createElement('span');
+          command.className = 'text-brand-200';
+          command.textContent = name;
+          const description = document.createElement('span');
+          description.dir = 'auto';
+          description.className = 'text-left [&:dir(rtl)]:font-sans';
+          description.textContent = desc;
+          li.append(command, description);
+          log.append(li);
+        });
+        line(help.hint, 'pt-2 text-ink-400 text-start');
+      } else if (cmd === 'cat profile.json') {
+        line(profileJson, 'whitespace-pre text-ink-300 leading-relaxed', true);
+      } else if (commands[cmd]) {
+        commands[cmd].forEach((out) => line(out, 'text-ink-300 break-words text-start'));
+      } else {
+        line(unknown.replace('{cmd}', cmd), 'text-rose-300 break-words text-start');
+      }
+      log.scrollTop = log.scrollHeight;
+    };
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      run(input.value);
+      input.value = '';
+      syncCaret();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && cursor > 0) {
+        input.value = history[--cursor];
+        e.preventDefault();
+      } else if (e.key === 'ArrowDown') {
+        cursor = Math.min(cursor + 1, history.length);
+        input.value = history[cursor] ?? '';
+        e.preventDefault();
+      } else {
+        return;
+      }
+      requestAnimationFrame(syncCaret);
+    });
+
+    // Keep keyboard focus in the prompt so ↑/↓ history works right after a suggestion is clicked
+    const focusPrompt = () => input.focus({ preventScroll: true });
+    form.querySelectorAll<HTMLButtonElement>('[data-cmd]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        run(btn.dataset.cmd!);
+        focusPrompt();
+        syncCaret();
+      }),
+    );
+    // Clicking the output area also returns to the prompt, unless the user is selecting text or following a link
+    log.addEventListener('click', (e) => {
+      if (!(e.target as HTMLElement).closest('a') && !getSelection()?.toString()) focusPrompt();
+    });
+
+    syncCaret();
+  });
+</script>
