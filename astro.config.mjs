@@ -30,7 +30,21 @@ export default defineConfig({
   },
   // CSP with automatic hashes for scripts and styles
   security: {
-    csp: true,
+    csp: {
+      // Extra directives for the <meta> CSP. frame-ancestors and the HTTP-only headers (HSTS, COOP, XFO) cannot
+      // live in a <meta> tag; they are set at the edge (see README).
+      directives: [
+        "default-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        'upgrade-insecure-requests',
+        // Trusted Types: DOM XSS sinks only accept values from the named policy (used for the service worker URL)
+        "require-trusted-types-for 'script'",
+        'trusted-types sw-registration',
+      ],
+      // No 'unsafe-inline' in script-src: Astro then drops the script hashes, which would allow any inline script
+    },
   },
   // Fonts live in the repository (src/assets/fonts, SIL OFL 1.1) and are served from this domain:
   // no requests to font services at build time or at runtime.

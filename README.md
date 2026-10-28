@@ -24,6 +24,24 @@ Bilingual (English / فارسی) personal site of Goudarz Jafari, built with Ast
   - `src/pwa/sw.template.js` is the service worker; `integrations/service-worker.mjs` turns it into `dist/sw.js` with a precache list and a content-hash version on every build.
   - `src/pages/offline.astro` is shown for uncached pages when offline.
   - Registration is silent: no custom install prompt; browsers show their own install option.
-- `public/_headers`: security and cache headers for Netlify and Cloudflare Pages.
+- `public/_headers`: security and cache headers for Netlify and Cloudflare Pages (GitHub Pages ignores it; see below).
 
 After changing the name or role in `ui.ts`, run `npm run assets` to refresh the social preview images.
+
+## Edge configuration (GitHub Pages behind Cloudflare)
+
+GitHub Pages cannot set HTTP headers, so these live in Cloudflare (DNS records proxied, SSL/TLS mode **Full**).
+The `<meta>` CSP built by Astro carries the hashed `script-src`/`style-src`; the header CSP below adds the
+directives a `<meta>` tag cannot carry. Browsers enforce both.
+
+- **Rules → Transform Rules → Response Header Transform Rule** (all requests), *Set static*:
+  - `Content-Security-Policy`: `frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; require-trusted-types-for 'script'; trusted-types sw-registration; upgrade-insecure-requests`
+  - `Cross-Origin-Opener-Policy`: `same-origin`
+  - `X-Frame-Options`: `DENY`
+  - `X-Content-Type-Options`: `nosniff`
+  - `Referrer-Policy`: `strict-origin-when-cross-origin`
+  - `Permissions-Policy`: `camera=(), microphone=(), geolocation=(), payment=(), usb=()`
+- **SSL/TLS → Edge Certificates → HSTS**: max-age 12 months, include subdomains.
+- **Caching → Cache Rules**: URI path starts with `/_astro/` → eligible for cache, Edge TTL and Browser TTL 1 year
+  (file names are content-hashed).
+- **Speed → Optimization**: Rocket Loader and Email Address Obfuscation off (they inject scripts the CSP blocks).

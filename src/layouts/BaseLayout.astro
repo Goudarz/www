@@ -54,7 +54,21 @@ const t = siteData[lang];
       // Silent registration: offline support and installability, with no prompts or banners.
       // Production only; sw.js is generated after the build.
       if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-        addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
+        // The CSP requires Trusted Types, and a service worker URL is a script sink: pass it through a policy
+        // that only ever allows our own /sw.js
+        const swUrl = window.trustedTypes
+          ? window.trustedTypes
+              .createPolicy('sw-registration', {
+                createScriptURL: (url) => {
+                  if (url !== '/sw.js') throw new TypeError(`Unexpected service worker URL: ${url}`);
+                  return url;
+                },
+              })
+              .createScriptURL('/sw.js')
+          : '/sw.js';
+        addEventListener('load', () =>
+          navigator.serviceWorker.register(swUrl as unknown as string, { scope: '/' }).catch(() => {}),
+        );
       }
 
       // Smooth cross-document transition between the English and Persian pages. It lives in a constructed
