@@ -97,26 +97,8 @@
   }
 }
 
-/* Smooth cross-document transition between the English and Persian pages, no JS */
-@media (prefers-reduced-motion: no-preference) {
-  @view-transition {
-    navigation: auto;
-  }
-}
-
-::view-transition-old(root) {
-  animation: 220ms ease-out both vt-fade-out;
-}
-::view-transition-new(root) {
-  animation: 420ms var(--ease-out-expo) both vt-fade-in;
-}
-
-@keyframes vt-fade-out {
-  to { opacity: 0; filter: blur(6px); }
-}
-@keyframes vt-fade-in {
-  from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
-}
+/* The cross-document view transition between the English and Persian pages is added by a constructed
+   stylesheet in BaseLayout.astro, so this file stays valid for the W3C CSS validator */
 
 @layer components {
   /* Glass card with a pointer-following spotlight (variables are set by the script in PortfolioBento.astro) */
@@ -246,14 +228,16 @@
   }
 }
 
-/* Reveal sections on scroll with CSS scroll-driven animations only */
+/* Reveal sections on scroll. The script in PortfolioBento.astro adds .js-reveal to <html> and marks each
+   section .is-revealed: immediately if it is already on screen, with .animate when it scrolls into view.
+   Without JS nothing is hidden. */
 @media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 35%;
-    }
+  .js-reveal .reveal:not(.is-revealed) {
+    opacity: 0;
+  }
+
+  .js-reveal .reveal.is-revealed.animate {
+    animation: reveal 700ms var(--ease-out-expo) both;
   }
 
   .rise {

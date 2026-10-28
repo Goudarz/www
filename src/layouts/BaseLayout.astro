@@ -55,6 +55,20 @@ const t = siteData[lang];
       if (import.meta.env.PROD && 'serviceWorker' in navigator) {
         addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
       }
+
+      // Smooth cross-document transition between the English and Persian pages. It lives in a constructed
+      // stylesheet rather than global.css because the W3C CSS validator does not know these rules yet.
+      if (matchMedia('(prefers-reduced-motion: no-preference)').matches && 'adoptedStyleSheets' in document) {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(`
+          @view-transition { navigation: auto; }
+          ::view-transition-old(root) { animation: 220ms ease-out both vt-fade-out; }
+          ::view-transition-new(root) { animation: 420ms cubic-bezier(0.16, 1, 0.3, 1) both vt-fade-in; }
+          @keyframes vt-fade-out { to { opacity: 0; filter: blur(6px); } }
+          @keyframes vt-fade-in { from { opacity: 0; transform: translateY(12px); filter: blur(6px); } }
+        `);
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+      }
     </script>
   </head>
   <body class="relative min-h-screen overflow-x-clip bg-ink-950 text-ink-100 antialiased">

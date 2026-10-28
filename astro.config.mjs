@@ -2,6 +2,7 @@
 import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import serviceWorker from './integrations/service-worker.mjs';
+import validatorFriendlyCss, { trimInlineStyles } from './integrations/validator-friendly-css.mjs';
 
 // Unicode ranges of the subsets the font files in src/assets/fonts were cut to
 const LATIN =
@@ -98,12 +99,14 @@ export default defineConfig({
   ],
   // The sitemap is a plain endpoint (src/pages/sitemap.xml.ts); the service worker is generated after the build
   integrations: [
+    trimInlineStyles(),
     serviceWorker({
       pages: ['/', '/fa/', '/offline/'],
       assets: ['/manifest.webmanifest', '/fa/manifest.webmanifest', '/favicon.svg', '/icon-192.png'],
     }),
   ],
   vite: {
-    plugins: [tailwindcss()],
+    // Order matters: Tailwind generates the CSS, then it is rewritten for the W3C validator
+    plugins: [tailwindcss(), validatorFriendlyCss()],
   },
 });

@@ -1,5 +1,6 @@
 ---
 // src/components/SEO.astro
+import { createHash } from 'node:crypto';
 import { siteData, languages, profile, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -146,6 +147,11 @@ const schemaOrg = {
     },
   ],
 };
+
+const jsonLd = JSON.stringify(schemaOrg);
+// JSON-LD is data and never executed, but listing its hash in the CSP keeps CSP checkers (such as the W3C
+// validator) from reporting it as a blocked inline script
+Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(jsonLd).digest('base64')}`);
 ---
 
 <title>{title}</title>
@@ -200,4 +206,4 @@ const schemaOrg = {
 <link rel="alternate" type="text/markdown" title="LLM-friendly summary" href="/llms.txt" />
 <link rel="author" href="/humans.txt" />
 
-<script type="application/ld+json" set:html={JSON.stringify(schemaOrg)} />
+<script type="application/ld+json" set:html={jsonLd} />
