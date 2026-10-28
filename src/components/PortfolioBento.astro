@@ -17,17 +17,6 @@ const [firstName, ...rest] = t.name.split(' ');
 const lastName = rest.join(' ');
 const contactLabel = t.nav.find((item) => item.href === '#contact')!.label;
 
-// FAQ answers stay plain text (they also feed JSON-LD and llms.txt); on the page the email address,
-// phone number and the GitHub/LinkedIn names become links
-const faqLinks = [
-  { text: profile.email, href: `mailto:${profile.email}` },
-  { text: profile.phoneDisplay[lang], href: `tel:${profile.phone}` },
-  ...profile.socials.filter((s) => s.label === 'GitHub' || s.label === 'LinkedIn').map((s) => ({ text: s.label, href: s.url })),
-];
-const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const faqLinkPattern = new RegExp(`(${faqLinks.map((l) => escapeRegExp(l.text)).join('|')})`);
-const linkify = (text: string) =>
-  text.split(faqLinkPattern).map((part) => ({ text: part, href: faqLinks.find((l) => l.text === part)?.href }));
 ---
 
 <header class="sticky top-0 z-40 border-b border-white/5 bg-ink-950/70 backdrop-blur-xl supports-[backdrop-filter]:bg-ink-950/50">
@@ -365,41 +354,7 @@ const linkify = (text: string) =>
       </a>
     </section>
 
-    <!-- 12. FAQ: direct answers to questions people ask search engines and AI assistants -->
-    <section aria-labelledby="faq-title" class="card reveal mt-6 p-6 sm:p-8 md:col-span-12">
-      <h2 id="faq-title" class="slash mb-4 text-xl font-bold text-white sm:text-2xl">{t.faqTitle}</h2>
-      <div class="divide-y divide-white/5">
-        {
-          t.faq.map((item) => (
-            <details class="group/faq py-1" name="faq">
-              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 rounded-lg py-3 font-semibold text-ink-100 marker:hidden hover:text-brand-200 [&::-webkit-details-marker]:hidden">
-                <h3 class="text-base">{item.q}</h3>
-                <span class="text-xl text-brand-300 transition-transform duration-300 group-open/faq:rotate-45" aria-hidden="true">+</span>
-              </summary>
-              <p class="pb-4 pe-8 leading-relaxed text-ink-300">
-                {linkify(item.a).map((part) =>
-                  part.href ? (
-                    <a
-                      href={part.href}
-                      {...(part.href.startsWith('http') && { target: '_blank', rel: 'noopener noreferrer' })}
-                      {...(!part.href.startsWith('http') && { dir: 'ltr' })}
-                      class="font-medium text-brand-300 underline decoration-brand-300/40 underline-offset-4 hover:text-brand-200 hover:decoration-brand-200"
-                    >
-                      {part.text}
-                      {part.href.startsWith('http') && <span class="sr-only"> {t.newTab}</span>}
-                    </a>
-                  ) : (
-                    part.text
-                  ),
-                )}
-              </p>
-            </details>
-          ))
-        }
-      </div>
-    </section>
-
-    <!-- 13. Contact -->
+    <!-- 12. Contact -->
     <section
       id="contact"
       aria-labelledby="contact-title"

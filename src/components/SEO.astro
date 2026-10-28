@@ -144,16 +144,6 @@ const schemaOrg = {
         item: sourceCode(g),
       })),
     },
-    {
-      '@type': 'FAQPage',
-      '@id': `${canonicalURL}#faq`,
-      inLanguage: langMeta.locale,
-      mainEntity: t.faq.map((f) => ({
-        '@type': 'Question',
-        name: f.q,
-        acceptedAnswer: { '@type': 'Answer', text: f.a },
-      })),
-    },
   ],
 };
 ---

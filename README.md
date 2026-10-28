@@ -15,7 +15,7 @@ Bilingual (English / فارسی) personal site of Goudarz Jafari, built with Ast
 ## Where things live
 
 - `src/i18n/ui.ts`: **single source of truth** for all content. Pages, JSON-LD, `llms.txt`, `llms-full.txt` and the terminal all read from it.
-- `src/components/SEO.astro`: meta tags, Open Graph, hreflang, Schema.org graph (Person, ProfilePage, WebSite, ItemList, FAQPage).
+- `src/components/SEO.astro`: meta tags, Open Graph, hreflang, Schema.org graph (Person, ProfilePage, WebSite, ItemList); the FAQ data in `ui.ts` is used only by `llms-full.txt`.
 - `src/components/HeroOrb.astro`: dependency-free WebGL2 orb. Loads on idle, pauses off-screen, and honours `prefers-reduced-motion`.
 - `src/components/Terminal.astro`: interactive terminal (progressive enhancement; content works without JS).
 - `src/pages/*.ts`: `robots.txt`, `sitemap.xml` (both languages with hreflang), `llms.txt`, `llms-full.txt`, `humans.txt`.

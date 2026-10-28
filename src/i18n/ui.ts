@@ -439,6 +439,7 @@ export const siteData = {
       { term: 'Location', value: 'Global / Remote' },
       { term: 'Languages', value: 'Persian (native), English' },
     ],
+    // FAQ is published only in llms-full.txt, not on the page or in the JSON-LD
     faqTitle: 'Frequently Asked Questions',
     faq: [
       {
@@ -901,6 +902,7 @@ export const siteData = {
       { term: 'موقعیت', value: 'بین‌المللی / ریموت' },
       { term: 'زبان‌ها', value: 'فارسی (زبان مادری)، انگلیسی' },
     ],
+    // FAQ is published only in llms-full.txt, not on the page or in the JSON-LD
     faqTitle: 'پرسش‌های پرتکرار',
     faq: [
       {
