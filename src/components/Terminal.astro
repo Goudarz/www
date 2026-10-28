@@ -75,12 +75,15 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
 
   <div class="flex-1 space-y-2 text-left">
     <p class="text-brand-300"><span class="text-ink-400" aria-hidden="true">$ </span>{t.terminalCmd}</p>
+    <!-- Focusable so keyboard users can scroll it; role="region" makes the aria-label valid on <pre> -->
     <pre
       tabindex="0"
+      role="region"
       aria-label="profile.json"
       class="overflow-x-auto rounded-lg pb-3 text-xs leading-relaxed text-ink-300"><code>{profileJson}</code></pre>
 
-    <ol data-terminal-log role="log" aria-live="polite" lang={lang} class="max-h-64 space-y-1 overflow-y-auto pe-3 [scrollbar-gutter:stable] empty:hidden"></ol>
+    <!-- role="log" is not allowed on <ol>, so the output is a div of line divs -->
+    <div data-terminal-log role="log" aria-live="polite" lang={lang} class="max-h-64 space-y-1 overflow-y-auto pe-3 [scrollbar-gutter:stable] empty:hidden"></div>
   </div>
 
   <form data-terminal-form class="mt-4 border-t border-white/10 pt-3" autocomplete="off">
@@ -129,7 +132,8 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
   type Output = string | { text: string; href: string; dir?: 'ltr' };
 
   // First strong character decides the direction, matching dir="auto"
-  const RTL = /^[^A-Za-zÀ-ɏ]*[֐-ࣿיִ-﷿ﹰ-﻿]/;
+  // Unicode property escapes keep the bundled regex ASCII-only (raw RTL characters are not NFC-safe)
+  const RTL = /^\P{L}*[\p{Script=Arabic}\p{Script=Hebrew}]/u;
 
   document.querySelectorAll<HTMLElement>('[data-terminal]').forEach((root) => {
     const { commands, help, profileJson, unknown } = JSON.parse(root.dataset.terminal!) as {
@@ -140,7 +144,7 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
     };
     const form = root.querySelector<HTMLFormElement>('[data-terminal-form]')!;
     const input = form.querySelector<HTMLInputElement>('input')!;
-    const log = root.querySelector<HTMLOListElement>('[data-terminal-log]')!;
+    const log = root.querySelector<HTMLDivElement>('[data-terminal-log]')!;
     const caret = root.querySelector<HTMLElement>('[data-terminal-caret]')!;
     const row = root.querySelector<HTMLElement>('[data-terminal-row]')!;
     const measure = document.createElement('canvas').getContext('2d')!;
@@ -181,10 +185,10 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
     new ResizeObserver(syncCaret).observe(input);
 
     const persianPage = log.lang === 'fa';
-    const PERSIAN = /[؀-ۿ]/;
+    const PERSIAN = /\p{Script=Arabic}/u;
 
     const line = (output: Output, cls: string, preformatted = false) => {
-      const li = document.createElement('li');
+      const li = document.createElement('div');
       // Lines that resolve to RTL use the proportional Persian font; monospace spaces look broken in Persian
       li.className = `${cls} [&:dir(rtl)]:font-sans`;
       let text = typeof output === 'string' ? output : output.text;
@@ -228,7 +232,7 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
       if (cmd === 'help') {
         line(help.head, 'whitespace-pre text-ink-300 leading-relaxed', true);
         help.rows.forEach(({ cmd: name, desc }) => {
-          const li = document.createElement('li');
+          const li = document.createElement('div');
           li.dir = 'ltr';
           li.className = 'grid grid-cols-[18ch_1fr] gap-x-2 ps-[2ch] text-ink-300';
           const command = document.createElement('span');
