@@ -61,8 +61,6 @@ const contactLabel = t.nav.find((item) => item.href === '#contact')!.label;
       <HeroOrb class="absolute -end-20 -top-20 h-72 w-72 opacity-60 sm:h-96 sm:w-96 md:-end-4 md:top-1/2 md:h-[34rem] md:w-[34rem] md:-translate-y-1/2 md:opacity-100 lg:end-4" />
       <!-- Scrim so text over the orb always keeps enough contrast -->
       <div class="pointer-events-none absolute inset-0 bg-linear-to-t from-ink-950/80 via-ink-950/40 to-transparent md:bg-linear-to-r md:from-ink-950/70 md:via-transparent rtl:md:bg-linear-to-l" aria-hidden="true"></div>
-      <div class="grain pointer-events-none absolute inset-0" aria-hidden="true"></div>
-
       <p class="rise relative mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-brand-400/25 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-200 backdrop-blur">
         <span class="relative flex h-2 w-2" aria-hidden="true">
           <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75 motion-reduce:hidden"></span>
@@ -430,22 +428,26 @@ const contactLabel = t.nav.find((item) => item.href === '#contact')!.label;
 
   // Reveal sections as they scroll into view. Sections already on screen are shown as they are (no flash);
   // the rest fade in once. Without JS or with reduced motion nothing is hidden.
+  // The observer's first callback reports what is on screen without any layout read on the main thread;
+  // hiding only starts after it, so nothing visible ever flashes.
   if (!reduce.matches && 'IntersectionObserver' in window) {
+    let initial = true;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          entry.target.classList.add('is-revealed', 'animate');
+          entry.target.classList.add('is-revealed');
+          if (!initial) entry.target.classList.add('animate');
           observer.unobserve(entry.target);
+        }
+        if (initial) {
+          initial = false;
+          document.documentElement.classList.add('js-reveal');
         }
       },
       { rootMargin: '0px 0px -8% 0px' },
     );
-    document.querySelectorAll<HTMLElement>('.reveal').forEach((el) => {
-      if (el.getBoundingClientRect().top < innerHeight) el.classList.add('is-revealed');
-      else observer.observe(el);
-    });
-    document.documentElement.classList.add('js-reveal');
+    document.querySelectorAll<HTMLElement>('.reveal').forEach((el) => observer.observe(el));
   }
 
   document.querySelectorAll<HTMLElement>('[data-tilt]').forEach((card) => {

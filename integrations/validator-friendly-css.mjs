@@ -7,6 +7,7 @@
 //   with the same initial values) for browsers without @property; that fallback is applied unconditionally.
 // - `@supports (… linear-gradient(in lab …))` blocks are dropped, so gradients interpolate in sRGB instead of oklab.
 // - Custom properties are removed from `transition-property` (they only animate when registered).
+// - Preflight rules for form controls the site does not use, and the legacy :-moz-focusring rule, are dropped.
 //
 // trimInlineStyles() is an Astro integration for the inlined <style> text; see its comment.
 import { createHash } from 'node:crypto';
@@ -54,8 +55,16 @@ export function transformCss(css) {
   css = rewriteAtRules(css, 'supports', (p) => p.includes('linear-gradient(in lab'), () => '');
   // Custom properties can only transition when registered with @property, which is removed above
   css = css.replace(/(transition-property:[^;}]*)/g, (decl) => decl.replace(/,\s*--[\w-]+/g, ''));
+  // Preflight resets for form controls this site does not use (date/time, number and search inputs) and
+  // Firefox's legacy focus ring (the site styles :focus-visible itself). Vendor-only selectors the validator flags.
+  css = css.replace(UNUSED_VENDOR_RULES, '');
   return css;
 }
+
+const UNUSED_VENDOR_RULES = new RegExp(
+  String.raw`(?<=^|[{}])[^{}@]*(?:::-webkit-(?:datetime-edit|date-and-time-value|calendar-picker-indicator|search-decoration|inner-spin-button|outer-spin-button)|:-moz-(?:ui-invalid|focusring))[^{}]*\{[^{}]*\}`,
+  'g',
+);
 
 export default function validatorFriendlyCss() {
   return {

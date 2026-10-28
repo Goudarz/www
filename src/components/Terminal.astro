@@ -153,6 +153,8 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
 
     // Keep one consistent block cursor: idle after the prompt, and at the end of the text while typing.
     // If the user moves the caret inside the text, fall back to the native caret so editing stays precise.
+    // Matches the caret's w-2 class (0.5rem), so its width never has to be read from layout
+    const CARET_WIDTH = 8;
     const syncCaret = () => {
       const rtl = RTL.test(input.value);
       // ❯ is a Bidi_Mirrored character: in an RTL row the browser already draws it as ❮,
@@ -167,18 +169,19 @@ const suggestions = ['help', 'whoami', 'skills', 'projects', 'experience', 'cont
       input.classList.toggle('caret-brand-400', !showBlock && focused);
       if (!showBlock) return;
 
-      const style = getComputedStyle(input);
-      measure.font = style.font;
+      // An empty prompt needs no measuring, so page load never forces a layout here
+      if (input.value === '') {
+        caret.style.left = '0px';
+        return;
+      }
+      measure.font = getComputedStyle(input).font;
       const width = input.clientWidth;
-      const caretWidth = caret.offsetWidth;
-      const textWidth = Math.min(measure.measureText(input.value).width, width - caretWidth);
-      const x = rtl ? width - textWidth - caretWidth : textWidth;
+      const textWidth = Math.min(measure.measureText(input.value).width, width - CARET_WIDTH);
+      const x = rtl ? width - textWidth - CARET_WIDTH : textWidth;
       caret.style.left = `${Math.max(0, x)}px`;
 
-      // Restart the blink so the cursor stays solid while typing
-      caret.classList.remove('caret');
-      void caret.offsetWidth;
-      caret.classList.add('caret');
+      // Restart the blink so the cursor stays solid while typing (no reflow, unlike re-adding the class)
+      for (const animation of caret.getAnimations()) animation.currentTime = 0;
     };
     ['input', 'focus', 'blur', 'click', 'keyup', 'select'].forEach((type) => input.addEventListener(type, syncCaret));
     document.addEventListener('selectionchange', () => document.activeElement === input && syncCaret());

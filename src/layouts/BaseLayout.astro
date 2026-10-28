@@ -19,7 +19,7 @@ const t = siteData[lang];
 ---
 
 <!doctype html>
-<html lang={lang} dir={dir}>
+<html lang={languages[lang].locale} dir={dir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -40,7 +40,8 @@ const t = siteData[lang];
     <!-- On the Persian page both Vazirmatn files are used (Latin words in Persian text use it too) -->
     <Font cssVariable="--font-vazir" preload={lang === 'fa'} />
     <Font cssVariable="--font-vazir-arabic" />
-    <Font cssVariable="--font-jetbrains" />
+    <!-- The terminal is above the fold; preloading its font avoids a late swap that shifts it -->
+    <Font cssVariable="--font-jetbrains" preload />
 
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
