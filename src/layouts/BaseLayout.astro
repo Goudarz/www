@@ -37,7 +37,8 @@ const t = siteData[lang];
 
     <!-- Preload only the primary font of the current language -->
     <Font cssVariable="--font-jakarta" preload={lang === 'en'} />
-    <Font cssVariable="--font-vazir" preload={lang === 'fa' ? [{ subset: 'arabic' }] : false} />
+    <!-- On the Persian page both Vazirmatn files are used (Latin words in Persian text use it too) -->
+    <Font cssVariable="--font-vazir" preload={lang === 'fa'} />
     <Font cssVariable="--font-vazir-arabic" />
     <Font cssVariable="--font-jetbrains" />
 
