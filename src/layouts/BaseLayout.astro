@@ -11,9 +11,11 @@ interface Props {
   title?: string;
   description?: string;
   noindex?: boolean;
+  /** false: the page renders its own SEO tags in the "head" slot (the Persian Calendar guide does) */
+  seo?: boolean;
 }
 
-const { lang, title, description, noindex } = Astro.props;
+const { lang, title, description, noindex, seo = true } = Astro.props;
 const { dir } = languages[lang];
 const t = siteData[lang];
 ---
@@ -48,7 +50,7 @@ const t = siteData[lang];
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href={`${languages[lang].path}manifest.webmanifest`} />
 
-    <SEO lang={lang} title={title} description={description} noindex={noindex} />
+    {seo ? <SEO lang={lang} title={title} description={description} noindex={noindex} /> : <slot name="head" />}
 
     <script>
       // Silent registration: offline support and installability, with no prompts or banners.
