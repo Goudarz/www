@@ -2,6 +2,16 @@
 
 Bilingual (English / فارسی) personal site of Goudarz Jafari, built with Astro 7 and Tailwind CSS 4.
 
+## Getting started
+
+The Persian Calendar guide (`/persian-calendar/`) is built from the [PersianCalendar](https://github.com/Goudarz/PersianCalendar)
+repository, vendored as a git submodule. Clone with submodules, or fetch them afterwards:
+
+```sh
+git clone --recurse-submodules https://github.com/Goudarz/www.git
+git submodule update --init          # in an existing clone
+```
+
 ## Commands
 
 | Command           | Action                                                        |
@@ -27,6 +37,33 @@ Bilingual (English / فارسی) personal site of Goudarz Jafari, built with Ast
 - `public/_headers`: security and cache headers for Netlify and Cloudflare Pages (GitHub Pages ignores it; see below).
 
 After changing the name or role in `ui.ts`, run `npm run assets` to refresh the social preview images.
+
+## Persian Calendar guide (`/persian-calendar/`, `/fa/persian-calendar/`)
+
+The guide is the [PersianCalendar](https://github.com/Goudarz/PersianCalendar) repository published as part of this site.
+Nothing is copied by hand: every page, code listing, download and date is read from `vendor/persian-calendar` at build time.
+
+- `src/persian-calendar/`
+  - `pages.ts`: every page, its source file, and how repository links map to site URLs (pages stay on the site,
+    data files become downloads, tool sources open on GitHub).
+  - `markdown.ts`: renders the repository Markdown one language at a time. Bilingual READMEs keep English text on the
+    English page and the `<div dir="rtl">` blocks on the Persian page; anchors stay compatible with GitHub's.
+    Code is highlighted with Prism classes (no inline styles, so the CSP stays strict).
+  - `implementations.ts`: the language list, read from the table in `implementations/README.md`.
+  - `content.ts`, `schema.ts`, `endpoints.ts`: page data, Schema.org graph (TechArticle, SoftwareSourceCode, Dataset),
+    and the Markdown/`llms.txt` routes. `zip.ts` builds the download archives.
+- `src/components/persian-calendar/`: layout, sidebar, page types and the live date converter (which runs the
+  repository's own JavaScript implementation).
+- Every page is also available as Markdown (`/persian-calendar/leap-years.md`), the guide has its own
+  `/persian-calendar/llms.txt` and `llms-full.txt` (English and Persian), and downloads live under `/persian-calendar/files/`.
+
+To publish a new version of the guide, move the submodule and commit it:
+
+```sh
+git -C vendor/persian-calendar fetch --tags
+git -C vendor/persian-calendar checkout v1.1.0      # or: git submodule update --remote
+git add vendor/persian-calendar && git commit -m "docs: update the Persian Calendar guide to v1.1.0"
+```
 
 ## Edge configuration (GitHub Pages behind Cloudflare)
 
