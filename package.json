@@ -17,7 +17,16 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.4.2",
-    "tailwindcss": "^4.3.3"
+    "github-slugger": "^2.0.0",
+    "refractor": "^5.0.0",
+    "rehype-raw": "^7.0.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "remark-stringify": "^11.0.0",
+    "tailwindcss": "^4.3.3",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "sharp": "^0.35.5"
