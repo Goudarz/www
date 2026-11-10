@@ -20,7 +20,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # The Persian Calendar guide is built from the vendor/persian-calendar submodule.
+      # Full history gives every guide page its real "last updated" date.
       - uses: actions/checkout@v7
+        with:
+          submodules: true
+          fetch-depth: 0
       # Installs dependencies, runs `astro build` and uploads dist/ as the Pages artifact
       - uses: withastro/action@v6
         with:
