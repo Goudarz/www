@@ -1,0 +1,160 @@
+---
+// src/components/persian-calendar/Converter.astro
+// Live date converter built on the repository's own JavaScript implementation. Hidden without JavaScript.
+import type { Lang } from '../../i18n/ui';
+import { docsText } from '../../persian-calendar/i18n';
+import { MONTH_NAMES_EN, MONTH_NAMES_FA } from '../../../vendor/persian-calendar/implementations/javascript/persian-calendar.js';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = docsText[lang];
+const months = lang === 'fa' ? MONTH_NAMES_FA : MONTH_NAMES_EN;
+const field =
+  'mt-1.5 block w-full rounded-xl border border-white/10 bg-ink-990 px-3 py-2.5 text-ink-100 transition-colors hover:border-white/20 focus:border-brand-400/60 focus:outline-none focus-visible:outline-2';
+const label = 'block text-sm text-ink-300';
+---
+
+<section
+  class="mt-8 rounded-[1.75rem] border border-white/10 bg-ink-900/60 p-6 backdrop-blur sm:p-8"
+  aria-labelledby="converter-title"
+  data-converter
+  data-lang={lang}
+  data-leap={t.leapYear}
+  data-common={t.commonYear}
+  data-invalid={t.invalidDate}
+  data-jdn={t.jdn}
+  data-doy={t.dayOfYear('{n}')}
+  hidden
+>
+  <div class="flex flex-wrap items-end justify-between gap-2">
+    <h2 id="converter-title" class="text-xl font-bold text-white">{t.converterTitle}</h2>
+    <p class="text-sm text-ink-400">{t.converterIntro}</p>
+  </div>
+
+  <div class="mt-6 grid gap-4 md:grid-cols-2">
+    <div class="rounded-2xl border border-white/10 bg-ink-950/70 p-5">
+      <p class="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-brand-300">{t.toPersian}</p>
+      <label for="cv-g" class={`${label} mt-4`}>{t.gregorianLabel}</label>
+      <input id="cv-g" type="date" class={field} dir="ltr" />
+      <output for="cv-g" class="mt-5 block min-h-[4.5rem]" data-out="g2p">
+        <span class="block text-2xl font-extrabold text-white" data-main></span>
+        <span class="mt-1 block text-sm text-ink-300" data-meta></span>
+      </output>
+    </div>
+
+    <div class="rounded-2xl border border-white/10 bg-ink-950/70 p-5">
+      <p class="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-brand-300">{t.toGregorian}</p>
+      <div class="mt-4 grid grid-cols-[1fr_1.7fr_1fr] gap-2">
+        <div>
+          <label for="cv-y" class={label}>{t.persianYear}</label>
+          <input id="cv-y" type="text" inputmode="numeric" autocomplete="off" class={field} />
+        </div>
+        <div>
+          <label for="cv-m" class={label}>{t.persianMonth}</label>
+          <select id="cv-m" class={field}>
+            {months.map((name, i) => <option value={i + 1}>{name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label for="cv-d" class={label}>{t.persianDay}</label>
+          <input id="cv-d" type="text" inputmode="numeric" autocomplete="off" class={field} />
+        </div>
+      </div>
+      <output for="cv-y cv-m cv-d" class="mt-5 block min-h-[4.5rem]" data-out="p2g">
+        <span class="block text-2xl font-extrabold text-white" data-main></span>
+        <span class="mt-1 block text-sm text-ink-300" data-meta></span>
+      </output>
+    </div>
+  </div>
+</section>
+
+<script>
+  import {
+    MONTH_NAMES_EN,
+    MONTH_NAMES_FA,
+    WEEKDAY_NAMES_EN,
+    WEEKDAY_NAMES_FA,
+    dayOfWeek,
+    dayOfYear,
+    fromGregorian,
+    isLeapYear,
+    isValidDate,
+    toGregorian,
+    toJdn,
+  } from '../../../vendor/persian-calendar/implementations/javascript/persian-calendar.js';
+
+  const root = document.querySelector<HTMLElement>('[data-converter]');
+  if (root) {
+    const fa = root.dataset.lang === 'fa';
+    const d = root.dataset;
+    const num = new Intl.NumberFormat(fa ? 'fa-IR' : 'en-US', { useGrouping: false });
+    const months = fa ? MONTH_NAMES_FA : MONTH_NAMES_EN;
+    const weekdays = fa ? WEEKDAY_NAMES_FA : WEEKDAY_NAMES_EN;
+    const fullDate = new Intl.DateTimeFormat(fa ? 'fa-IR-u-ca-gregory' : 'en-US', { dateStyle: 'full', timeZone: 'UTC' });
+    const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
+    const gInput = $<HTMLInputElement>('#cv-g');
+    const yInput = $<HTMLInputElement>('#cv-y');
+    const mInput = $<HTMLSelectElement>('#cv-m');
+    const dInput = $<HTMLInputElement>('#cv-d');
+    const pad = (n: number, width = 2) => String(Math.abs(n)).padStart(width, '0');
+    // Accept Persian and Arabic-Indic digits as well as ASCII
+    const toInt = (value: string) => {
+      const ascii = value.trim().replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 0x06f0)).replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 0x0660));
+      return /^-?\d{1,6}$/.test(ascii) ? Number(ascii) : NaN;
+    };
+
+    function show(out: 'g2p' | 'p2g', main: string, meta = '') {
+      const box = $(`[data-out="${out}"]`);
+      box.querySelector('[data-main]')!.textContent = main;
+      box.querySelector('[data-meta]')!.textContent = meta;
+    }
+
+    function persianMeta(y: number, m: number, day: number) {
+      return [
+        weekdays[dayOfWeek(y, m, day)],
+        isLeapYear(y) ? d.leap : d.common,
+        d.doy!.replace('{n}', num.format(dayOfYear(y, m, day))),
+        `${d.jdn} ${num.format(toJdn(y, m, day))}`,
+      ].join(' · ');
+    }
+
+    function g2p() {
+      const match = gInput.value.match(/^(\d{4,})-(\d{2})-(\d{2})$/);
+      if (!match) return show('g2p', d.invalid!);
+      try {
+        const p = fromGregorian(Number(match[1]), Number(match[2]), Number(match[3]));
+        show('g2p', `${num.format(p.day)} ${months[p.month - 1]} ${num.format(p.year)}`, persianMeta(p.year, p.month, p.day));
+      } catch {
+        show('g2p', d.invalid!);
+      }
+    }
+
+    function p2g() {
+      const y = toInt(yInput.value);
+      const m = Number(mInput.value);
+      const day = toInt(dInput.value);
+      if (!isValidDate(y, m, day)) return show('p2g', d.invalid!);
+      const g = toGregorian(y, m, day);
+      const date = new Date(Date.UTC(2000, 0, 1));
+      date.setUTCFullYear(g.year, g.month - 1, g.day);
+      show('p2g', fullDate.format(date), `${g.year < 0 ? '-' : ''}${pad(g.year, 4)}-${pad(g.month)}-${pad(g.day)} · ${persianMeta(y, m, day)}`);
+    }
+
+    // Start from today (the visitor's local date)
+    const now = new Date();
+    gInput.value = `${pad(now.getFullYear(), 4)}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const today = fromGregorian(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    yInput.value = num.format(today.year);
+    mInput.value = String(today.month);
+    dInput.value = num.format(today.day);
+
+    gInput.addEventListener('input', g2p);
+    for (const input of [yInput, mInput, dInput]) input.addEventListener('input', p2g);
+    g2p();
+    p2g();
+    root.hidden = false;
+  }
+</script>
