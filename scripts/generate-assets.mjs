@@ -104,4 +104,76 @@ for (const [lang, data] of Object.entries(pages)) {
   await writeFile(out(`og/${lang}.png`), await sharp(Buffer.from(og(data))).png({ compressionLevel: 9 }).toBuffer());
 }
 
-console.log('✓ favicon.svg/.ico, icon-192/512, icon-maskable-512, apple-touch-icon, logo.png, og/en.png, og/fa.png');
+// Open Graph images of the Persian Calendar guide: the 33-year leap cycle next to the title
+const guideOg = ({ title, subtitle, ringLabel, url, dir }) => {
+  const rtl = dir === 'rtl';
+  const textX = rtl ? 1110 : 90;
+  const anchor = rtl ? 'end' : 'start';
+  const cx = rtl ? 280 : 920;
+  const cy = 300;
+  // Positions of the eight leap years in a 33-year cycle, as ticks on a ring
+  const leap = new Set([1, 5, 9, 13, 17, 22, 26, 30]);
+  const ticks = Array.from({ length: 33 }, (_, i) => {
+    const a = (i / 33) * Math.PI * 2 - Math.PI / 2;
+    const inner = leap.has(i) ? 150 : 172;
+    const p = (r) => `${(cx + Math.cos(a) * r).toFixed(1)} ${(cy + Math.sin(a) * r).toFixed(1)}`;
+    const [x1, y1] = p(inner).split(' ');
+    const [x2, y2] = p(205).split(' ');
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${leap.has(i) ? YELLOW : '#435069'}" stroke-width="${leap.has(i) ? 12 : 5}" stroke-linecap="round"/>`;
+  }).join('');
+  const logoW = 92;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="${cx / 1200}" cy="0.47" r="0.36">
+      <stop offset="0" stop-color="${YELLOW}" stop-opacity=".16"/>
+      <stop offset="1" stop-color="${NAVY}" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity=".045"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="${NAVY}"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  ${ticks}
+  <g font-family="Segoe UI, Vazirmatn, sans-serif" text-anchor="middle">
+    <text x="${cx}" y="${cy + 12}" font-size="76" font-weight="800" fill="#ffffff">8/33</text>
+    <text x="${cx}" y="${cy + 56}" font-size="24" fill="#98a4b8">${ringLabel}</text>
+  </g>
+  ${logoAt(rtl ? 1110 - logoW : 90, 70, logoW)}
+  <polygon points="0,600 1200,600 1200,630 0,630" fill="${YELLOW}"/>
+  <g font-family="Segoe UI, Vazirmatn, sans-serif" text-anchor="${anchor}">
+    ${title.map((line, i) => `<text x="${textX}" y="${250 + i * 78}" font-size="68" font-weight="800" fill="${i === 0 ? '#ffffff' : YELLOW}">${line}</text>`).join('\n    ')}
+    <text x="${textX}" y="${250 + title.length * 78 + 12}" font-size="28" font-weight="600" fill="#dde3ec">${subtitle}</text>
+    <text x="${textX}" y="540" font-size="24" font-family="Consolas, monospace" fill="${YELLOW}">${url}</text>
+  </g>
+</svg>`;
+};
+
+const guidePages = {
+  en: {
+    title: ['Jalali Calendar', 'for Developers'],
+    subtitle: 'Tested code in 14 languages · verified data',
+    ringLabel: 'leap years per cycle',
+    url: 'goudarzjafari.com/persian-calendar',
+    dir: 'ltr',
+  },
+  fa: {
+    title: ['تقویم جلالی', 'برای برنامه‌نویس‌ها'],
+    subtitle: 'کد آزموده در ۱۴ زبان · دادهٔ راستی‌آزمایی‌شده',
+    ringLabel: 'سال کبیسه در هر دوره',
+    url: 'goudarzjafari.com/fa/persian-calendar',
+    dir: 'rtl',
+  },
+};
+
+for (const [lang, data] of Object.entries(guidePages)) {
+  await writeFile(
+    out(`og/persian-calendar-${lang}.png`),
+    await sharp(Buffer.from(guideOg(data))).png({ compressionLevel: 9 }).toBuffer(),
+  );
+}
+
+console.log(
+  '✓ favicon.svg/.ico, icon-192/512, icon-maskable-512, apple-touch-icon, logo.png, og/en.png, og/fa.png, og/persian-calendar-{en,fa}.png',
+);

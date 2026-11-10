@@ -1,0 +1,79 @@
+---
+// src/components/persian-calendar/DocsHead.astro
+// <head> tags of a guide page: title, description, language alternates, social cards, Markdown alternate, JSON-LD.
+import { createHash } from 'node:crypto';
+import { languages, profile, siteData } from '../../i18n/ui';
+import { ORIGIN, type DocData } from '../../persian-calendar/content';
+import { docsText } from '../../persian-calendar/i18n';
+import { markdownUrl, pageUrl } from '../../persian-calendar/pages';
+import { buildSchema } from '../../persian-calendar/schema';
+
+interface Props {
+  doc: DocData;
+}
+
+const { doc } = Astro.props;
+const { lang, page } = doc;
+const t = docsText[lang];
+const other = lang === 'en' ? 'fa' : 'en';
+
+const url = `${ORIGIN}${pageUrl(page.slug, lang)}`;
+const enUrl = `${ORIGIN}${pageUrl(page.slug, 'en')}`;
+const faUrl = `${ORIGIN}${pageUrl(page.slug, 'fa')}`;
+// Chapter titles are short, so they carry the guide name; the overview and language pages already name the topic
+const title = page.kind === 'chapter' || page.kind === 'reference' ? `${doc.title} · ${t.brandLong}` : doc.title;
+const ogImage = `${ORIGIN}/og/persian-calendar-${lang}.png`;
+const isArticle = page.kind !== 'home';
+
+const jsonLd = JSON.stringify(buildSchema(doc, ogImage));
+// JSON-LD is data, never executed; its hash keeps CSP checkers from reporting it as a blocked inline script
+Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(jsonLd).digest('base64')}`);
+---
+
+<title>{title}</title>
+<meta name="description" content={doc.description} />
+<meta name="author" content={siteData[lang].name} />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+<link rel="canonical" href={url} />
+<link rel="alternate" hreflang="en" href={enUrl} />
+<link rel="alternate" hreflang="fa" href={faUrl} />
+<link rel="alternate" hreflang="x-default" href={enUrl} />
+
+<!-- Plain-text versions for language models and readers -->
+<link rel="alternate" type="text/markdown" title={t.viewMarkdownHint} href={markdownUrl(page.slug, lang)} />
+<link rel="help" type="text/markdown" title="llms.txt" href="/persian-calendar/llms.txt" />
+<link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+<link rel="author" href="/humans.txt" />
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content={isArticle ? 'article' : 'website'} />
+<meta property="og:site_name" content="Goudarz Jafari" />
+<meta property="og:url" content={url} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={doc.description} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={t.brandLong} />
+<meta property="og:locale" content={languages[lang].ogLocale} />
+<meta property="og:locale:alternate" content={languages[other].ogLocale} />
+{
+  isArticle && (
+    <>
+      <meta property="article:published_time" content={doc.created.toISOString()} />
+      <meta property="article:modified_time" content={doc.modified.toISOString()} />
+      <meta property="article:author" content={`${ORIGIN}${languages[lang].path}`} />
+      <meta property="article:section" content={t.brandLong} />
+    </>
+  )
+}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content={profile.xHandle} />
+<meta name="twitter:creator" content={profile.xHandle} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={doc.description} />
+<meta name="twitter:image" content={ogImage} />
+<meta name="twitter:image:alt" content={t.brandLong} />
+
+<script type="application/ld+json" set:html={jsonLd} />
