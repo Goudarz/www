@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* The vendored PersianCalendar repository is content, not markup: keep its text out of the class scan.
+   The guide's own components get their utilities from docs.css, so they stay out of this (main page) stylesheet. */
+@source not "../../vendor";
+@source not "../components/persian-calendar";
+@source not "../persian-calendar";
 
 @import "./theme.css";
 

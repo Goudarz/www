@@ -1,0 +1,13 @@
+---
+// Persian pages of the Persian Calendar guide: /fa/persian-calendar/…
+import DocsPage from '../../../components/persian-calendar/DocsPage.astro';
+import { docPages } from '../../../persian-calendar/pages';
+
+export function getStaticPaths() {
+  return docPages.map((page) => ({ params: { slug: page.slug || undefined }, props: { page } }));
+}
+
+const { page } = Astro.props;
+---
+
+<DocsPage page={page} lang="fa" />

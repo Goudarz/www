@@ -1,0 +1,154 @@
+---
+// src/components/persian-calendar/DocLanguage.astro
+// One implementation: facts, a three-step quick start, every file with copy/download, other languages.
+import type { DocData } from '../../persian-calendar/content';
+import { version } from '../../persian-calendar/content';
+import { docsText } from '../../persian-calendar/i18n';
+import { copyButton, highlight, toHtml } from '../../persian-calendar/markdown';
+import { languagePages, pageUrl } from '../../persian-calendar/pages';
+import { LICENSES } from '../../persian-calendar/schema';
+import CodeFile from './CodeFile.astro';
+import DocHeader from './DocHeader.astro';
+
+interface Props {
+  doc: DocData;
+}
+
+const { doc } = Astro.props;
+const { lang, page } = doc;
+const t = docsText[lang];
+const view = doc.language!;
+const { impl } = view;
+const folder = `implementations/${impl.dir}`;
+const runHtml = toHtml(highlight(impl.run, 'bash'));
+const copyLabel = toHtml([copyButton(t)]);
+
+const facts = [
+  { term: t.facts.requirement, value: impl.label, ltr: true },
+  { term: t.facts.testedWith, value: impl.testedWith, ltr: true },
+  ...(view.details
+    ? [
+        { term: t.facts.crossChecked, html: view.details.crossChecked },
+        { term: t.facts.checks, html: view.details.checks },
+      ]
+    : []),
+];
+const pill =
+  'inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 font-mono text-xs text-ink-200 transition-colors hover:border-brand-400/40 hover:bg-brand-400/10 hover:text-brand-100';
+---
+
+<article>
+  <DocHeader doc={doc} eyebrow={`${t.languageEyebrow} · ${impl.name}`} lead={doc.description} />
+
+  <dl class="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2">
+    {
+      facts.map((fact) => (
+        <div class="bg-ink-950 px-5 py-4">
+          <dt class="text-xs font-semibold uppercase tracking-wider text-ink-400">{fact.term}</dt>
+          {fact.html ? (
+            <dd class="prose mt-1 text-sm leading-relaxed" set:html={fact.html} />
+          ) : (
+            <dd class="mt-1 text-sm font-semibold text-ink-100" dir={fact.ltr ? 'ltr' : undefined}>
+              {fact.value}
+            </dd>
+          )}
+        </div>
+      ))
+    }
+    <div class="bg-ink-950 px-5 py-4">
+      <dt class="text-xs font-semibold uppercase tracking-wider text-ink-400">{t.facts.license}</dt>
+      <dd class="mt-1 text-sm font-semibold text-ink-100">
+        <a href={LICENSES.code} rel="license" class="underline decoration-white/20 underline-offset-4 hover:text-brand-200">MIT</a>
+      </dd>
+    </div>
+    <div class="bg-ink-950 px-5 py-4">
+      <dt class="text-xs font-semibold uppercase tracking-wider text-ink-400">{t.facts.version}</dt>
+      <dd class="mt-1 font-mono text-sm font-semibold text-ink-100" dir="ltr">{version}</dd>
+    </div>
+  </dl>
+
+  <section aria-labelledby="quick-start" class="mt-12">
+    <h2 id="quick-start" class="text-2xl font-bold text-white">{t.quickStart}</h2>
+    <ol class="mt-5 space-y-6">
+      <li class="flex gap-4">
+        <span class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-brand-400 text-sm font-bold text-ink-950" aria-hidden="true">1</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-ink-200">{t.stepDownload}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            {
+              view.code.map((file) => (
+                <a href={file.url} download class={pill} dir="ltr">
+                  <span aria-hidden="true">↓</span>
+                  {file.name}
+                </a>
+              ))
+            }
+            <a href={view.zipUrl} download class="btn-primary px-3.5 py-1.5 text-xs">
+              {t.downloadAll}
+            </a>
+          </div>
+        </div>
+      </li>
+      <li class="flex gap-4">
+        <span class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-brand-400 text-sm font-bold text-ink-950" aria-hidden="true">2</span>
+        <div class="min-w-0 flex-1">
+          <p class="text-ink-200">{t.stepTest}</p>
+          <div class="code-block mb-0 mt-3">
+            <div class="code-head">
+              <span class="code-name" dir="ltr">{folder}</span>
+              <Fragment set:html={copyLabel} />
+            </div>
+            <pre dir="ltr" tabindex="0"><code class="language-bash" set:html={runHtml} /></pre>
+          </div>
+          {impl.runNote && <p class="mt-2 text-sm text-ink-400" dir="ltr">{impl.runNote}</p>}
+        </div>
+      </li>
+      <li class="flex gap-4">
+        <span class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-brand-400 text-sm font-bold text-ink-950" aria-hidden="true">3</span>
+        <p class="min-w-0 flex-1 text-ink-200">
+          {t.stepApi}{' '}
+          <a href={`${pageUrl('implementations', lang)}#common-api`} class="text-brand-200 underline decoration-brand-300/40 underline-offset-4 hover:text-brand-100">
+            {t.apiLink}
+          </a>
+        </p>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="source" class="mt-14">
+    <h2 id="source" class="text-2xl font-bold text-white">{t.sourceFiles}</h2>
+    {view.code.map((file) => <CodeFile file={file} lang={lang} />)}
+  </section>
+
+  <section aria-labelledby="tests" class="mt-14">
+    <h2 id="tests" class="text-2xl font-bold text-white">{t.testFiles}</h2>
+    {view.tests.map((file) => <CodeFile file={file} lang={lang} collapsed />)}
+  </section>
+
+  {
+    view.extra.length > 0 && (
+      <section aria-labelledby="project-files" class="mt-14">
+        <h2 id="project-files" class="text-2xl font-bold text-white">{t.projectFiles}</h2>
+        {view.extra.map((file) => <CodeFile file={file} lang={lang} collapsed />)}
+      </section>
+    )
+  }
+
+  <section aria-labelledby="other-languages" class="mt-14">
+    <h2 id="other-languages" class="text-xl font-bold text-white">{t.otherLanguages}</h2>
+    <ul class="mt-4 flex flex-wrap gap-2">
+      {
+        languagePages
+          .filter((p) => p !== page)
+          .map((p) => (
+            <li>
+              <a href={pageUrl(p.slug, lang)} class={pill} dir="ltr">
+                {p.impl!.name}
+                <span class="sr-only" lang={lang}> {t.implementationSuffix}</span>
+              </a>
+            </li>
+          ))
+      }
+    </ul>
+  </section>
+</article>

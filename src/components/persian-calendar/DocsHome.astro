@@ -1,0 +1,144 @@
+---
+// src/components/persian-calendar/DocsHome.astro
+// Overview page: hero with the README introduction, headline numbers, live converter, chapters, languages, README.
+import { chapterBlurbs, formatStats, loadAll, version, type DocData } from '../../persian-calendar/content';
+import { docsText, formatNumber } from '../../persian-calendar/i18n';
+import { markdownUrl, pageUrl } from '../../persian-calendar/pages';
+import { REPO_URL } from '../../persian-calendar/repo';
+import { repoZipUrl } from '../../persian-calendar/schema';
+import Converter from './Converter.astro';
+
+interface Props {
+  doc: DocData;
+}
+
+const { doc } = Astro.props;
+const { lang } = doc;
+const t = docsText[lang];
+const docs = await loadAll(lang);
+const chapters = docs.filter((d) => d.page.kind === 'chapter');
+const languages = docs.filter((d) => d.page.kind === 'language');
+const blurbs = chapterBlurbs(lang);
+const s = formatStats(lang);
+const stats = [
+  { value: s.languages, label: t.stats.languages },
+  { value: s.days, label: t.stats.days },
+  { value: s.vectors, label: t.stats.vectors },
+  { value: s.libraries, label: t.stats.libraries },
+];
+const secondary =
+  'inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-ink-100 transition-colors hover:bg-white/10';
+const small =
+  'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink-300 transition-colors hover:bg-white/5 hover:text-brand-100';
+---
+
+<section aria-labelledby="page-title" class="relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-ink-900/50 px-6 py-10 sm:px-10 sm:py-14">
+  <!-- Decorative: the 33-year cycle's eight leap years as yellow ticks -->
+  <svg class="pointer-events-none absolute -end-28 -top-28 h-72 w-72 opacity-20 sm:-end-24 sm:-top-24 sm:h-96 sm:w-96 xl:opacity-25" viewBox="-50 -50 100 100" aria-hidden="true">
+    {
+      Array.from({ length: 33 }, (_, i) => {
+        const leap = [1, 5, 9, 13, 17, 22, 26, 30].includes(i);
+        const a = (i / 33) * Math.PI * 2 - Math.PI / 2;
+        const r1 = leap ? 33 : 37;
+        return (
+          <line
+            x1={(Math.cos(a) * r1).toFixed(2)}
+            y1={(Math.sin(a) * r1).toFixed(2)}
+            x2={(Math.cos(a) * 44).toFixed(2)}
+            y2={(Math.sin(a) * 44).toFixed(2)}
+            stroke={leap ? '#ffca08' : '#435069'}
+            stroke-width={leap ? 2.4 : 1.2}
+            stroke-linecap="round"
+          />
+        );
+      })
+    }
+    <circle r="27" fill="none" stroke="#2e3a50" stroke-width="0.6" stroke-dasharray="1.5 2.5"></circle>
+  </svg>
+
+  <div class="relative max-w-3xl">
+    <p class="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-400/25 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-200">
+      <span class="h-2 w-2 rounded-full bg-brand-400" aria-hidden="true"></span>
+      {t.eyebrow} · <span dir="ltr">v{version}</span> · MIT
+    </p>
+    <h1 id="page-title" class="text-3xl font-extrabold leading-[1.15] tracking-tight text-white sm:text-5xl">{doc.title}</h1>
+    {doc.leadHtml && <p class="prose mt-5 text-lg leading-relaxed text-ink-300" set:html={doc.leadHtml} />}
+
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href={pageUrl('basics', lang)} class="btn-primary px-5 py-3">
+        {t.startReading} <span class="btn-arrow" aria-hidden="true">→</span>
+      </a>
+      <a href={pageUrl('implementations', lang)} class={secondary}>{t.getTheCode}</a>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center gap-1">
+      <a href={repoZipUrl} download class={small}>
+        <span aria-hidden="true">↓</span>
+        {t.downloadRepo}
+      </a>
+      <a href={markdownUrl('', lang)} class={small} type="text/markdown">{t.viewMarkdown}</a>
+      <button type="button" class={small} data-copy-page={markdownUrl('', lang)} title={t.copyPageHint} hidden>
+        <span data-label>{t.copyPage}</span>
+      </button>
+      <a href={REPO_URL} class={small}>{t.viewOnGitHub} <span class="rtl:-scale-x-100" aria-hidden="true">↗</span></a>
+    </div>
+  </div>
+
+  <dl class="relative mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 lg:grid-cols-4">
+    {
+      stats.map((stat) => (
+        <div class="flex flex-col bg-ink-950/90 px-5 py-4">
+          <dt class="order-2 mt-1 text-xs leading-snug text-ink-400">{stat.label}</dt>
+          <dd class="order-1 text-2xl font-extrabold tracking-tight text-brand-300">{stat.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>
+
+<Converter lang={lang} />
+
+<section aria-labelledby="chapters" class="mt-14">
+  <h2 id="chapters" class="slash text-2xl font-bold text-white sm:text-3xl">{t.chaptersTitle}</h2>
+  <ol class="mt-6 grid gap-3 sm:grid-cols-2">
+    {
+      chapters.map((chapter) => (
+        <li class="group relative flex gap-4 rounded-2xl border border-white/10 bg-ink-900/50 p-5 transition-colors hover:border-brand-400/40 hover:bg-ink-900">
+          <span class="font-mono text-2xl font-extrabold leading-none text-brand-400/80" aria-hidden="true">
+            {lang === 'fa' ? formatNumber(chapter.number!, lang) : String(chapter.number).padStart(2, '0')}
+          </span>
+          <div class="min-w-0">
+            <h3 class="font-bold text-white transition-colors group-hover:text-brand-200">
+              <a href={pageUrl(chapter.page.slug, lang)} class="stretched-link focus:outline-none">
+                {chapter.title}
+              </a>
+            </h3>
+            <p class="mt-1 text-sm leading-relaxed text-ink-400">{blurbs.get(chapter.page.slug) ?? chapter.description}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<section aria-labelledby="languages" class="mt-14">
+  <h2 id="languages" class="slash text-2xl font-bold text-white sm:text-3xl">{t.languagesTitle}</h2>
+  <p class="mt-2 text-ink-400">{t.languagesIntro}</p>
+  <ul class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+    {
+      languages.map((d) => (
+        <li>
+          <a
+            href={pageUrl(d.page.slug, lang)}
+            class="flex h-full flex-col rounded-xl border border-white/10 bg-ink-900/50 px-4 py-3 transition-colors hover:border-brand-400/40 hover:bg-ink-900"
+            dir="ltr"
+          >
+            <span class="font-semibold text-ink-100">{d.navTitle}</span>
+            <span class="mt-0.5 font-mono text-xs text-ink-400">{d.language!.impl.label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<div class="prose mt-6 max-w-[52rem]" set:html={doc.html} />

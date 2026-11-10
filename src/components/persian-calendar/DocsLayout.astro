@@ -1,0 +1,283 @@
+---
+// src/components/persian-calendar/DocsLayout.astro
+// Shell of every guide page: header, sidebar, "On this page", previous/next links and footer.
+import Logo from '../../assets/gj-logo.svg';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { languages, siteData } from '../../i18n/ui';
+import { loadAll, version, type DocData } from '../../persian-calendar/content';
+import { docsText } from '../../persian-calendar/i18n';
+import type { TocItem } from '../../persian-calendar/markdown';
+import { docPages, pageUrl } from '../../persian-calendar/pages';
+import { REPO_SLUG, REPO_URL } from '../../persian-calendar/repo';
+import { LICENSES } from '../../persian-calendar/schema';
+import '../../styles/docs.css';
+import DocsHead from './DocsHead.astro';
+import DocsNav from './DocsNav.astro';
+
+interface Props {
+  doc: DocData;
+  /** Overrides the page's own heading list in "On this page" */
+  toc?: TocItem[];
+}
+
+const { doc } = Astro.props;
+const { lang, page } = doc;
+const t = docsText[lang];
+const other = lang === 'en' ? 'fa' : 'en';
+const docs = await loadAll(lang);
+const index = docPages.indexOf(page);
+const prev = index > 0 ? docs[index - 1] : undefined;
+const next = index < docs.length - 1 ? docs[index + 1] : undefined;
+const toc = Astro.props.toc ?? doc.headings;
+
+const licenses = [
+  { label: lang === 'fa' ? 'متن راهنما' : 'Guide text', name: t.licenseLinks.docs, url: LICENSES.docs },
+  { label: lang === 'fa' ? 'کد' : 'Code', name: t.licenseLinks.code, url: LICENSES.code },
+  { label: lang === 'fa' ? 'داده‌ها' : 'Data', name: t.licenseLinks.data, url: LICENSES.data },
+];
+const pager = lang === 'fa' ? 'صفحه‌های قبلی و بعدی' : 'Previous and next pages';
+// Path separator that leans with the reading direction
+const separator = lang === 'fa' ? '\\' : '/';
+---
+
+<BaseLayout lang={lang} seo={false}>
+  <DocsHead slot="head" doc={doc} />
+
+  <header class="sticky top-0 z-40 border-b border-white/5 bg-ink-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-ink-950/60">
+    <div class="mx-auto flex h-16 w-full max-w-[90rem] items-center gap-2.5 px-4 sm:gap-3 sm:px-6">
+      <a href={languages[lang].path} class="group flex flex-none items-center gap-2.5 rounded-xl">
+        <Logo class="h-7 w-auto transition-transform duration-300 group-hover:-skew-x-6" aria-hidden="true" />
+        <span class="sr-only sm:not-sr-only sm:font-bold sm:text-ink-100">{siteData[lang].name}</span>
+      </a>
+      <span class="text-ink-600" aria-hidden="true">{separator}</span>
+      <a href={pageUrl('', lang)} class="truncate rounded-lg font-semibold text-ink-100 transition-colors hover:text-brand-200">
+        {t.brand}
+      </a>
+      <span class="hidden flex-none rounded-md border border-brand-400/25 bg-brand-400/10 px-1.5 py-0.5 font-mono text-[11px] text-brand-200 sm:inline" dir="ltr">
+        v{version}
+      </span>
+
+      <div class="ms-auto flex flex-none items-center gap-2">
+        <a
+          href={REPO_URL}
+          class="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-ink-900/80 text-ink-200 transition-colors hover:bg-ink-800 hover:text-white"
+        >
+          <svg viewBox="0 0 16 16" class="h-[18px] w-[18px]" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+          </svg>
+          <span class="sr-only">{t.viewOnGitHub} — {REPO_SLUG}</span>
+        </a>
+        <a
+          href={pageUrl(page.slug, other)}
+          hreflang={other}
+          class="flex h-9 items-center gap-2 rounded-xl border border-white/10 bg-ink-900/80 px-3.5 text-sm font-medium text-ink-200 transition-colors hover:bg-ink-800"
+        >
+          <span class="h-2 w-2 rounded-full bg-brand-400" aria-hidden="true"></span>
+          <span lang={other}>{languages[other].label}</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div
+    class="mx-auto w-full max-w-[90rem] px-4 sm:px-6 lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[15.5rem_minmax(0,1fr)_13.5rem]"
+  >
+    <aside class="hidden lg:block">
+      <div class="sticky top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto py-8 pe-2">
+        <DocsNav lang={lang} docs={docs} current={page.slug} id="side" />
+      </div>
+    </aside>
+
+    <main
+      id="main"
+      tabindex="-1"
+      class="min-w-0 pb-16 pt-6 focus:outline-none lg:pt-10"
+      data-docs
+      data-copied={t.copied}
+      data-failed={t.copyFailed}
+    >
+      <details class="docs-menu mb-6 rounded-2xl border border-white/10 bg-ink-900/60 lg:hidden">
+        <summary class="flex cursor-pointer items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-ink-100">
+          {t.menu}
+          <svg class="menu-chevron h-4 w-4 text-ink-400 transition-[rotate]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m4 6 4 4 4-4"></path>
+          </svg>
+        </summary>
+        <div class="border-t border-white/10 px-1 py-4">
+          <DocsNav lang={lang} docs={docs} current={page.slug} id="menu" />
+        </div>
+      </details>
+
+      <slot />
+
+      {
+        (prev || next) && (
+          <nav aria-label={pager} class="mt-16 grid gap-3 sm:grid-cols-2">
+            {prev && (
+              <a
+                href={pageUrl(prev.page.slug, lang)}
+                rel="prev"
+                class="group flex flex-col gap-1 rounded-2xl border border-white/10 bg-ink-900/50 px-5 py-4 transition-colors hover:border-brand-400/40 hover:bg-ink-900"
+              >
+                <span class="text-xs text-ink-400">
+                  <span class="inline-block rtl:-scale-x-100" aria-hidden="true">←</span> {t.previous}
+                </span>
+                <span class="font-semibold text-ink-100 group-hover:text-brand-200">{prev.navTitle}</span>
+              </a>
+            )}
+            {next && (
+              <a
+                href={pageUrl(next.page.slug, lang)}
+                rel="next"
+                class="group flex flex-col items-end gap-1 rounded-2xl border border-white/10 bg-ink-900/50 px-5 py-4 text-end transition-colors hover:border-brand-400/40 hover:bg-ink-900 sm:col-start-2"
+              >
+                <span class="text-xs text-ink-400">
+                  {t.next} <span class="inline-block rtl:-scale-x-100" aria-hidden="true">→</span>
+                </span>
+                <span class="font-semibold text-ink-100 group-hover:text-brand-200">{next.navTitle}</span>
+              </a>
+            )}
+          </nav>
+        )
+      }
+
+      <footer class="mt-12 space-y-2 border-t border-white/10 pt-6 text-sm leading-relaxed text-ink-400">
+        <p>
+          {t.sourceNote}
+          <a href={REPO_URL} class="text-ink-200 underline decoration-white/20 underline-offset-4 hover:text-brand-200" dir="ltr">{REPO_SLUG}</a>
+          · {t.versionLabel(version)}
+        </p>
+        <p>
+          {
+            licenses.map((l, i) => (
+              <>
+                {i > 0 && ' · '}
+                {l.label}{' '}
+                <a href={l.url} rel="license" class="text-ink-200 underline decoration-white/20 underline-offset-4 hover:text-brand-200" dir="ltr">
+                  {l.name}
+                </a>
+              </>
+            ))
+          }
+        </p>
+        <p>
+          © <a href={languages[lang].path} class="text-ink-200 underline decoration-white/20 underline-offset-4 hover:text-brand-200">{siteData[lang].name}</a>
+        </p>
+      </footer>
+      <p class="sr-only" role="status" data-copy-status></p>
+    </main>
+
+    {
+      toc.length > 1 && (
+        <aside class="hidden xl:block">
+          <div class="sticky top-16 max-h-[calc(100dvh-4rem)] overflow-y-auto py-10">
+            <nav aria-labelledby="toc-title" class="toc">
+              <p id="toc-title" class="mb-3 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">
+                {t.onThisPage}
+              </p>
+              <ul class="space-y-0.5 border-s border-white/10 text-[13px] leading-snug">
+                {toc.map((item) => (
+                  <li>
+                    <a
+                      href={`#${item.id}`}
+                      class:list={[
+                        '-ms-px block border-s border-transparent py-1 text-ink-400 transition-colors hover:border-ink-400 hover:text-ink-100',
+                        item.depth > 2 ? 'ps-6' : 'ps-3',
+                      ]}
+                    >
+                      {item.text}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        </aside>
+      )
+    }
+  </div>
+  <script>
+    // Copy buttons (code blocks, whole page as Markdown, single values), "On this page" highlighting,
+    // and opening a collapsed file listing when a link points into it. No innerHTML anywhere (Trusted Types).
+    const root = document.querySelector<HTMLElement>('[data-docs]');
+    const status = document.querySelector<HTMLElement>('[data-copy-status]');
+    const SELECTOR = '[data-copy-code], [data-copy-page], [data-copy-text]';
+
+    function flash(button: HTMLElement, ok: boolean) {
+      const label = button.querySelector<HTMLElement>('[data-label]') ?? button;
+      button.dataset.original ??= label.textContent ?? '';
+      const message = ok ? root?.dataset.copied : root?.dataset.failed;
+      label.textContent = message ?? '';
+      button.dataset.state = ok ? 'done' : 'error';
+      if (status) status.textContent = message ?? '';
+      clearTimeout(Number(button.dataset.timer));
+      button.dataset.timer = String(
+        setTimeout(() => {
+          label.textContent = button.dataset.original ?? '';
+          delete button.dataset.state;
+        }, 1800),
+      );
+    }
+
+    async function copyFromUrl(url: string) {
+      const text = fetch(url).then((response) => {
+        if (!response.ok) throw new Error(String(response.status));
+        return response.text();
+      });
+      // A pending ClipboardItem keeps the click's user activation in Safari while the file downloads
+      if ('ClipboardItem' in window) {
+        const blob = text.then((value) => new Blob([value], { type: 'text/plain' }));
+        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+      } else {
+        await navigator.clipboard.writeText(await text);
+      }
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      for (const button of document.querySelectorAll<HTMLElement>(SELECTOR)) button.hidden = false;
+      document.addEventListener('click', async (event) => {
+        const button = (event.target as Element | null)?.closest<HTMLElement>(SELECTOR);
+        if (!button) return;
+        try {
+          if (button.dataset.copyPage) await copyFromUrl(button.dataset.copyPage);
+          else if (button.dataset.copyText !== undefined) await navigator.clipboard.writeText(button.dataset.copyText);
+          else await navigator.clipboard.writeText(button.closest('.code-block')?.querySelector('pre')?.textContent ?? '');
+          flash(button, true);
+        } catch {
+          flash(button, false);
+        }
+      });
+    }
+
+    // "On this page": highlight the section being read. IntersectionObserver reports positions without forcing layout.
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a[href^="#"]')];
+    const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
+    const setActive = (i: number) => links.forEach((a, j) => a.toggleAttribute('data-active', i === j));
+    if (links.length && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            const i = targets.indexOf(entry.target as HTMLElement);
+            if (entry.isIntersecting) setActive(i);
+            else if (entry.rootBounds && entry.boundingClientRect.top > entry.rootBounds.bottom) setActive(i - 1);
+          }
+        },
+        { rootMargin: '-64px 0px -70% 0px' },
+      );
+      for (const target of targets) if (target) observer.observe(target);
+    }
+
+    // Links to a file inside a collapsed listing open it
+    function openTarget() {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const target = id ? document.getElementById(id) : null;
+      const details = target?.closest('details');
+      if (target && details && !details.open) {
+        details.open = true;
+        target.scrollIntoView();
+      }
+    }
+    openTarget();
+    addEventListener('hashchange', openTarget);
+  </script>
+</BaseLayout>

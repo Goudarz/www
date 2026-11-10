@@ -1,0 +1,58 @@
+---
+// src/components/persian-calendar/CodeFile.astro
+// One source file: name, size, copy and download buttons, highlighted code. Tests and project files start collapsed.
+import type { Lang } from '../../i18n/ui';
+import type { CodeFile } from '../../persian-calendar/content';
+import { docsText } from '../../persian-calendar/i18n';
+import { languageLabel } from '../../persian-calendar/markdown';
+
+interface Props {
+  file: CodeFile;
+  lang: Lang;
+  collapsed?: boolean;
+}
+
+const { file, lang, collapsed = false } = Astro.props;
+const t = docsText[lang];
+const action = 'code-action';
+---
+
+{
+  collapsed ? (
+    <details class="file-details mt-4 overflow-hidden rounded-2xl border border-white/10 bg-ink-990">
+      <summary class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.03]">
+        <svg class="file-chevron h-3.5 w-3.5 flex-none text-ink-400 transition-[rotate]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 4 4 4-4 4" />
+        </svg>
+        <h3 id={file.id} class="min-w-0 truncate font-mono text-sm font-semibold text-ink-100" dir="ltr">
+          {file.name}
+        </h3>
+        <span class="ms-auto flex-none font-mono text-xs text-ink-400">{t.linesLabel(file.lines)}</span>
+      </summary>
+      <div class="code-block code-block-flush">
+        <div class="code-head">
+          <span class="code-lang">{languageLabel(file.language)}</span>
+          <span class="code-actions">
+            <button type="button" class="code-copy" data-copy-code aria-label={`${t.copy} ${file.name}`} hidden>{t.copy}</button>
+            <a href={file.url} download class={action}>{t.download}</a>
+          </span>
+        </div>
+        <pre dir="ltr" tabindex="0"><code class={`language-${file.language}`} set:html={file.html} /></pre>
+      </div>
+    </details>
+  ) : (
+    <div class="code-block">
+      <div class="code-head">
+        <div class="flex min-w-0 items-baseline gap-2">
+          <h3 id={file.id} class="code-name" dir="ltr">{file.name}</h3>
+          <span class="flex-none text-ink-400">· {t.linesLabel(file.lines)}</span>
+        </div>
+        <span class="code-actions">
+          <button type="button" class="code-copy" data-copy-code aria-label={`${t.copy} ${file.name}`} hidden>{t.copy}</button>
+          <a href={file.url} download class={action}>{t.download}</a>
+        </span>
+      </div>
+      <pre dir="ltr" tabindex="0"><code class={`language-${file.language}`} set:html={file.html} /></pre>
+    </div>
+  )
+}

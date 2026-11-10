@@ -1,0 +1,81 @@
+---
+// src/components/persian-calendar/DocsNav.astro
+// Guide navigation, used in the desktop sidebar and in the mobile "Contents" menu.
+import type { Lang } from '../../i18n/ui';
+import type { DocData } from '../../persian-calendar/content';
+import { docsText, formatNumber } from '../../persian-calendar/i18n';
+import { pageUrl } from '../../persian-calendar/pages';
+import { REPO_URL } from '../../persian-calendar/repo';
+import { repoZipUrl } from '../../persian-calendar/schema';
+
+interface Props {
+  lang: Lang;
+  docs: DocData[];
+  current: string;
+  /** Prefix for element ids, so the component can appear twice on a page */
+  id: string;
+}
+
+const { lang, docs, current, id } = Astro.props;
+const t = docsText[lang];
+const groups = (['start', 'guide', 'code', 'verification', 'project'] as const).map((group) => ({
+  group,
+  items: docs.filter((d) => d.page.group === group),
+}));
+const link = 'flex items-baseline gap-2.5 rounded-lg px-3 py-1.5 text-sm text-ink-300 transition-colors hover:bg-white/5 hover:text-white';
+const current_ = (slug: string) => (slug === current ? 'page' : undefined);
+---
+
+<nav aria-label={t.navLabel} class="docs-nav">
+  {
+    groups.map(({ group, items }) => (
+      <div class="mb-6 last:mb-0">
+        <p id={`${id}-${group}`} class="mb-1.5 px-3 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400">
+          {t.groups[group]}
+        </p>
+        {group === 'code' ? (
+          <ul aria-labelledby={`${id}-${group}`} class="grid grid-cols-2 gap-0.5">
+            {items.map((d) => (
+              <li class={d.page.kind === 'language' ? '' : 'col-span-2'}>
+                <a href={pageUrl(d.page.slug, lang)} aria-current={current_(d.page.slug)} class={link} dir={d.page.kind === 'language' ? 'ltr' : undefined}>
+                  {d.navTitle}
+                  {d.page.kind === 'language' && <span class="sr-only" lang={lang}> {t.implementationSuffix}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul aria-labelledby={`${id}-${group}`} class="space-y-0.5">
+            {items.map((d) => (
+              <li>
+                <a href={pageUrl(d.page.slug, lang)} aria-current={current_(d.page.slug)} class={link}>
+                  {d.number !== undefined && (
+                    <span class="nav-num w-5 flex-none text-end font-mono text-xs text-ink-400" aria-hidden="true">
+                      {formatNumber(d.number, lang)}
+                    </span>
+                  )}
+                  <span>{d.navTitle}</span>
+                </a>
+              </li>
+            ))}
+            {group === 'project' && (
+              <>
+                <li>
+                  <a href={REPO_URL} class={link}>
+                    <span>{t.viewOnGitHub}</span>
+                    <span class="text-ink-500 rtl:-scale-x-100" aria-hidden="true">↗</span>
+                  </a>
+                </li>
+                <li>
+                  <a href={repoZipUrl} download class={link}>
+                    {t.downloadRepo}
+                  </a>
+                </li>
+              </>
+            )}
+          </ul>
+        )}
+      </div>
+    ))
+  }
+</nav>

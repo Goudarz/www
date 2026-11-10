@@ -1,0 +1,466 @@
+/* Styles for the Persian Calendar guide (/persian-calendar/). Loaded only on the guide pages.
+   Colours are inlined from the theme (--theme(... inline)) so this file does not depend on which
+   theme variables the main stylesheet happens to emit. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "./theme.css";
+/* Utilities used only by the guide's components; the main page's stylesheet does not carry them */
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../components/persian-calendar";
+@source "../persian-calendar";
+
+/* Same layer order as Tailwind, so utility classes can still override these component styles */
+@layer theme, base, components, utilities;
+
+@layer components {
+
+/* ---------- Article typography ---------- */
+.prose {
+  color: --theme(--color-ink-200 inline);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+:root[lang|='fa'] .prose {
+  line-height: 2;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote {
+  margin-block: 1em;
+}
+
+.prose a {
+  color: --theme(--color-brand-200 inline);
+  text-decoration: underline;
+  text-decoration-color: rgb(255 216 61 / 0.35);
+  text-underline-offset: 4px;
+  transition: color 150ms, text-decoration-color 150ms;
+}
+
+.prose a:hover {
+  color: --theme(--color-brand-100 inline);
+  text-decoration-color: currentColor;
+}
+
+.prose strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.prose h2 {
+  font-size: 1.6rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+}
+
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-size: 1.075rem;
+}
+
+/* Heading plus its "#" link */
+.prose .heading {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 2.6em;
+  margin-bottom: 0.8em;
+}
+
+.prose .heading-h2 {
+  padding-top: 1.6rem;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.prose .heading-h3,
+.prose .heading-h4,
+.prose .heading-h5,
+.prose .heading-h6 {
+  margin-top: 2em;
+}
+
+.prose .heading > :first-child {
+  margin: 0;
+}
+
+.prose .heading-anchor {
+  flex: none;
+  color: --theme(--color-ink-500 inline);
+  font-weight: 600;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 150ms, color 150ms;
+}
+
+.prose .heading:hover .heading-anchor,
+.prose .heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+.prose .heading-anchor:hover {
+  color: --theme(--color-brand-300 inline);
+}
+
+@media (hover: none) {
+  .prose .heading-anchor {
+    opacity: 0.6;
+  }
+}
+
+.prose ul,
+.prose ol {
+  padding-inline-start: 1.5em;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+:root[lang|='fa'] .prose ol {
+  list-style: persian;
+}
+
+.prose li {
+  margin-block: 0.4em;
+  padding-inline-start: 0.25em;
+}
+
+.prose li::marker {
+  color: --theme(--color-brand-400 inline);
+}
+
+.prose li > p {
+  margin-block: 0.4em;
+}
+
+.prose blockquote {
+  border-inline-start: 3px solid --theme(--color-brand-400 inline);
+  border-radius: 0.75rem;
+  background: rgb(26 35 51 / 0.65);
+  padding: 0.9rem 1.2rem;
+  color: --theme(--color-ink-100 inline);
+}
+
+.prose blockquote > :first-child {
+  margin-top: 0;
+}
+
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.prose hr {
+  margin-block: 2.5rem;
+  border: 0;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Inline code. Code is always left to right, even inside Persian text. */
+.prose :not(pre) > code,
+.code-inline {
+  direction: ltr;
+  unicode-bidi: isolate;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 0.375rem;
+  background: --theme(--color-ink-900 inline);
+  padding: 0.12em 0.4em;
+  color: --theme(--color-brand-100 inline);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+.prose a code {
+  color: inherit;
+}
+
+/* ---------- Code blocks ---------- */
+.code-block {
+  margin-block: 1.5em;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 1rem;
+  background: --theme(--color-ink-990 inline);
+}
+
+.code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  background: rgb(26 35 51 / 0.6);
+  padding-block: 0.3rem;
+  padding-inline: 1rem 0.4rem;
+  color: --theme(--color-ink-400 inline);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.code-head .code-name {
+  overflow: hidden;
+  color: --theme(--color-ink-200 inline);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.code-copy,
+.code-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 0.03);
+  padding: 0.3rem 0.65rem;
+  color: --theme(--color-ink-200 inline);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms, color 150ms, border-color 150ms;
+}
+
+.code-copy:hover,
+.code-action:hover {
+  border-color: rgb(255 202 8 / 0.4);
+  background: rgb(255 202 8 / 0.1);
+  color: --theme(--color-brand-100 inline);
+}
+
+.code-copy[data-state='done'] {
+  border-color: rgb(255 202 8 / 0.5);
+  color: --theme(--color-brand-200 inline);
+}
+
+.code-block pre {
+  overflow-x: auto;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  color: --theme(--color-ink-100 inline);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  tab-size: 4;
+  text-align: left;
+}
+
+.code-block pre:focus-visible {
+  outline-offset: -2px;
+}
+
+.code-block code {
+  font-family: inherit;
+}
+
+/* Listing inside a collapsible file: the <details> box draws the frame */
+.code-block-flush {
+  margin: 0;
+  border-width: 1px 0 0;
+  border-radius: 0;
+}
+
+/* ---------- Tables ---------- */
+.table-wrap {
+  margin-block: 1.5em;
+  overflow-x: auto;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 0.9rem;
+}
+
+.table-wrap:focus-visible {
+  outline-offset: 2px;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.prose th {
+  background: rgb(26 35 51 / 0.85);
+  padding: 0.65rem 0.9rem;
+  color: #fff;
+  font-weight: 700;
+  text-align: start;
+  vertical-align: bottom;
+}
+
+.prose td {
+  border-top: 1px solid rgb(255 255 255 / 0.06);
+  padding: 0.6rem 0.9rem;
+  vertical-align: top;
+}
+
+.prose tbody tr:hover {
+  background: rgb(255 255 255 / 0.02);
+}
+
+/* ---------- Prism tokens (palette from the logo: navy, yellow, blue) ---------- */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: --theme(--color-ink-400 inline);
+  font-style: italic;
+}
+
+.token.punctuation,
+.token.operator {
+  color: --theme(--color-ink-300 inline);
+}
+
+.token.keyword,
+.token.atrule,
+.token.important,
+.token.rule {
+  color: --theme(--color-accent-300 inline);
+}
+
+.token.function,
+.token.method {
+  color: --theme(--color-brand-200 inline);
+}
+
+.token.class-name,
+.token.builtin,
+.token.namespace,
+.token.annotation,
+.token.decorator {
+  color: #7dd3fc;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.template-string,
+.token.inserted {
+  color: #a7e3b0;
+}
+
+.token.number,
+.token.boolean,
+.token.constant,
+.token.symbol {
+  color: #f7a8c8;
+}
+
+.token.property,
+.token.attr-name,
+.token.tag,
+.token.selector {
+  color: --theme(--color-accent-200 inline);
+}
+
+.token.regex,
+.token.variable,
+.token.interpolation-punctuation,
+.token.deleted {
+  color: #fbbf77;
+}
+
+.token.bold {
+  font-weight: 700;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+/* ---------- Sidebar and table of contents ---------- */
+.docs-nav a[aria-current='page'] {
+  background: rgb(255 202 8 / 0.1);
+  color: --theme(--color-brand-100 inline);
+}
+
+.docs-nav a[aria-current='page'] .nav-num {
+  color: --theme(--color-brand-300 inline);
+}
+
+.toc a[data-active] {
+  border-color: --theme(--color-brand-400 inline);
+  color: --theme(--color-brand-100 inline);
+}
+
+.docs-menu > summary {
+  list-style: none;
+}
+
+.docs-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.docs-menu[open] .menu-chevron {
+  rotate: 180deg;
+}
+
+/* Collapsible file listings */
+.file-details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.file-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.file-details[open] .file-chevron {
+  rotate: 90deg;
+}
+
+[dir='rtl'] .file-chevron {
+  scale: -1 1;
+}
+
+[dir='rtl'] .file-details[open] .file-chevron {
+  rotate: -90deg;
+}
+}
+
+/* Letter-spacing pulls joined Persian letters apart, so tracking utilities never apply to right-to-left text.
+   Unlayered on purpose: it must win over the utilities layer. */
+:root[dir='rtl'] [class*='tracking-']:not([dir='ltr']) {
+  letter-spacing: normal;
+}

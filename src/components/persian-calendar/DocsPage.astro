@@ -1,0 +1,34 @@
+---
+// src/components/persian-calendar/DocsPage.astro
+// Renders any page of the guide in one language.
+import type { Lang } from '../../i18n/ui';
+import { loadDoc } from '../../persian-calendar/content';
+import { docsText } from '../../persian-calendar/i18n';
+import type { DocPage } from '../../persian-calendar/pages';
+import DocArticle from './DocArticle.astro';
+import DocLanguage from './DocLanguage.astro';
+import DocsHome from './DocsHome.astro';
+import DocsLayout from './DocsLayout.astro';
+
+interface Props {
+  page: DocPage;
+  lang: Lang;
+}
+
+const { page, lang } = Astro.props;
+const doc = await loadDoc(page, lang);
+const t = docsText[lang];
+// The overview lists its own sections before the README headings
+const toc =
+  page.kind === 'home'
+    ? [
+        { depth: 2, id: 'chapters', text: t.chaptersTitle },
+        { depth: 2, id: 'languages', text: t.languagesTitle },
+        ...doc.headings,
+      ]
+    : undefined;
+---
+
+<DocsLayout doc={doc} toc={toc}>
+  {page.kind === 'home' ? <DocsHome doc={doc} /> : page.kind === 'language' ? <DocLanguage doc={doc} /> : <DocArticle doc={doc} />}
+</DocsLayout>

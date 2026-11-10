@@ -1,0 +1,46 @@
+---
+// src/components/persian-calendar/DocArticle.astro
+// A chapter of the guide or a reference page (implementations, data, tools, contributing).
+import { DATA_ZIP, type DocData } from '../../persian-calendar/content';
+import { docsText } from '../../persian-calendar/i18n';
+import { chapterPages, fileUrl } from '../../persian-calendar/pages';
+import { repoZipUrl } from '../../persian-calendar/schema';
+import DocHeader from './DocHeader.astro';
+
+interface Props {
+  doc: DocData;
+}
+
+const { doc } = Astro.props;
+const { lang, page } = doc;
+const t = docsText[lang];
+const eyebrow = page.kind === 'chapter' && doc.number ? t.chapter(doc.number, chapterPages.length) : t.groups[page.group];
+// Pages that describe downloadable things offer the matching archive
+const download =
+  page.slug === 'data'
+    ? { href: fileUrl(DATA_ZIP), label: t.downloadData }
+    : page.slug === 'implementations'
+      ? { href: repoZipUrl, label: t.downloadRepo }
+      : undefined;
+---
+
+<article>
+  <DocHeader doc={doc} eyebrow={eyebrow}>
+    {
+      download && (
+        <a
+          slot="actions"
+          href={download.href}
+          download
+          class="inline-flex items-center gap-1.5 rounded-lg border border-brand-400/40 bg-brand-400/10 px-3 py-1.5 text-xs font-semibold text-brand-100 transition-colors hover:bg-brand-400/20"
+        >
+          <svg viewBox="0 0 16 16" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <path d="M8 2v8m0 0 3-3m-3 3L5 7M2.5 12.5v1h11v-1"></path>
+          </svg>
+          {download.label}
+        </a>
+      )
+    }
+  </DocHeader>
+  <div class="prose max-w-[52rem]" set:html={doc.html} />
+</article>
