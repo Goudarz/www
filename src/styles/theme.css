@@ -1,0 +1,41 @@
+/* Design tokens shared by global.css (whole site) and docs.css (Persian Calendar guide) */
+@theme {
+  /* Persian characters inside English text use Vazirmatn; everything else uses Plus Jakarta Sans */
+  --font-sans: var(--font-vazir-arabic), var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), var(--font-vazir-arabic), ui-monospace, monospace;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Palette taken from the GJ logo: yellow #ffca08, navy #141c29, white */
+  --color-brand-50: #fffbe6;
+  --color-brand-100: #fff3bf;
+  --color-brand-200: #ffe680;
+  --color-brand-300: #ffd83d;
+  --color-brand-400: #ffca08;
+  --color-brand-500: #e6b400;
+  --color-brand-600: #b88f00;
+  --color-brand-700: #8a6b00;
+  --color-brand-800: #5c4700;
+  --color-brand-900: #3d2f00;
+  --color-brand-950: #241c00;
+
+  --color-ink-50: #f7f9fc;
+  --color-ink-100: #eef2f7;
+  --color-ink-200: #dde3ec;
+  --color-ink-300: #c0c9d7;
+  --color-ink-400: #98a4b8;
+  --color-ink-500: #67758d;
+  --color-ink-600: #435069;
+  --color-ink-700: #2e3a50;
+  --color-ink-800: #222d40;
+  --color-ink-900: #1a2333;
+  --color-ink-950: #141c29;
+  --color-ink-990: #0b1019;
+
+  /* Complementary blue for tags and the secondary glow */
+  --color-accent-200: #cdd9ff;
+  --color-accent-300: #a8bdff;
+  --color-accent-400: #7f9cff;
+  --color-accent-500: #5b7cf5;
+  --color-accent-950: #121a3a;
+
+}
