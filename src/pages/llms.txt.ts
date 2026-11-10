@@ -26,6 +26,7 @@ ${en.facts.map((f) => `- ${f.term}: ${f.value}`).join('\n')}
 - [English profile](${base}/): Portfolio, skills, selected projects and contact
 - [Persian profile / پروفایل فارسی](${base}/fa/): ${fa.description}
 - [Full text for LLMs](${base}/llms-full.txt): Complete bilingual content of the site
+- [Jalali Calendar for Developers](${base}/persian-calendar/): Bilingual guide to the Jalali (Persian, Solar Hijri) calendar with dependency-free code in 14 languages and verified reference data. Its own index: ${base}/persian-calendar/llms.txt
 
 ## Free software
 
@@ -41,7 +42,7 @@ ${en.experience.groups.map((g) => `- ${g.title}: ${g.items.join(' ')}`).join('\n
 
 ## Selected projects
 
-${en.projects.map((p) => `- [${p.title}](${p.link}): ${p.desc} (${p.tag}${p.status ? `, ${p.status.toLowerCase()}` : ''})`).join('\n')}
+${en.projects.map((p) => `- [${p.title}](${p.page ? `${base}${p.page}` : p.link}): ${p.desc} (${p.tag}${p.status ? `, ${p.status.toLowerCase()}` : ''})`).join('\n')}
 
 ## ${en.l10nTitle}
 

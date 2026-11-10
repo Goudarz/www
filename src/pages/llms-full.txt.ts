@@ -37,7 +37,7 @@ ${t.experience.groups.map((g) => `#### ${g.title}\n\n${g.items.map((i) => `- ${i
 
 ## ${t.projectsTitle}
 
-${t.projects.map((p) => `### ${p.title}\n\n${p.desc}\n\n- Tags: ${p.tag}${p.status ? `\n- Status: ${p.status}` : ''}\n- Link: ${p.link}`).join('\n\n')}
+${t.projects.map((p) => `### ${p.title}\n\n${p.desc}\n\n- Tags: ${p.tag}${p.status ? `\n- Status: ${p.status}` : ''}${p.page ? `\n- Guide: ${profile.siteUrl}${p.page}` : ''}\n- Link: ${p.link}`).join('\n\n')}
 
 ## ${t.l10nTitle}
 

@@ -21,6 +21,7 @@ ${crawlers.map((ua) => `User-agent: ${ua}`).join('\n')}
 Allow: /
 
 # LLM-friendly summaries: ${new URL('llms.txt', site).href}
+# Jalali calendar guide for LLMs: ${new URL('persian-calendar/llms.txt', site).href} (every page also as .md)
 Sitemap: ${new URL('sitemap.xml', site).href}
 `.trim();
 
