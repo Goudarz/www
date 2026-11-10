@@ -1,0 +1,3 @@
+[submodule "vendor/persian-calendar"]
+	path = vendor/persian-calendar
+	url = https://github.com/Goudarz/PersianCalendar.git
