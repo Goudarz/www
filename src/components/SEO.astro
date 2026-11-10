@@ -23,11 +23,12 @@ const faUrl = `${siteUrl}${languages.fa.path}`;
 const ogImage = `${siteUrl}/og/${lang}.png`;
 const sameAs = profile.socials.map((s) => s.url);
 
-const sourceCode = (item: { title: string; desc: string; link: string; tag: string; language: string }) => ({
+const sourceCode = (item: { title: string; desc: string; link: string; tag: string; language: string; page?: string }) => ({
   '@type': 'SoftwareSourceCode',
   name: item.title,
   description: item.desc,
-  url: item.link,
+  // Projects documented on this site point to that page; the repository stays the code location
+  url: item.page ? `${siteUrl}${item.page}` : item.link,
   codeRepository: item.link,
   programmingLanguage: item.language,
   keywords: item.tag,

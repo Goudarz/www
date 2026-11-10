@@ -128,6 +128,9 @@ export const siteData = {
         status: '',
         language: 'Python, JavaScript, TypeScript, Java, Kotlin, Scala, C#, Go, Rust, PHP, Dart, C, Ruby, SQL',
         link: links.persianCalendar,
+        // Published on this site from the repository (src/persian-calendar)
+        page: '/persian-calendar/',
+        linkLabel: 'Read the guide',
       },
       {
         title: 'WME Gregorian To Jalali',
@@ -591,6 +594,8 @@ export const siteData = {
         status: '',
         language: 'Python, JavaScript, TypeScript, Java, Kotlin, Scala, C#, Go, Rust, PHP, Dart, C, Ruby, SQL',
         link: links.persianCalendar,
+        page: '/fa/persian-calendar/',
+        linkLabel: 'مطالعهٔ راهنما',
       },
       {
         title: 'تبدیل تاریخ میلادی به شمسی در ویز (WME)',

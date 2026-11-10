@@ -42,7 +42,7 @@ const commands: Record<string, Output[]> = {
   ],
   ls: ['profile.json'],
   skills: [t.skills.join(' · ')],
-  projects: t.projects.map((p) => ({ text: `▸ ${p.title} [${p.tag}]`, href: p.link })),
+  projects: t.projects.map((p) => ({ text: `▸ ${p.title} [${p.tag}]`, href: p.page ?? p.link })),
   l10n: t.l10n.map((item) => (item.links[0] ? { text: `▸ ${item.project} — ${item.role}`, href: item.links[0].url } : `▸ ${item.project} — ${item.role}`)),
   gists: t.gists.map((g) => ({ text: `▸ ${g.title} [${g.tag}]`, href: g.link })),
   freedom: t.freedoms.map((f) => `${f.n}. ${f.title} — ${f.desc}`),
