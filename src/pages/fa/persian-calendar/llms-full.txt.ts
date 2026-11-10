@@ -1,0 +1,5 @@
+// /fa/persian-calendar/llms-full.txt: the complete Persian guide in one Markdown file
+import type { APIRoute } from 'astro';
+import { llmsFull } from '../../../persian-calendar/endpoints';
+
+export const GET: APIRoute = () => llmsFull('fa');
